@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<resources>
+    <string name="firestore_database_id" translatable="false">ai-studio-android-parlefre-d0f99103-f631-4b55-ba84-c98a97d8c6ae</string>
+    <string name="recaptcha_site_key" translatable="false">6LemP-8tAAAAAOGVo0ScVaAqQTqYpGsbTHodrvI4</string>
+</resources>

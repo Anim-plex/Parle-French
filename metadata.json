@@ -1,0 +1,6 @@
+{
+  "name": "Parle French",
+  "description": "French language learning app with interactive AI roleplays, exam prep, active recall flashcards, and image vocabulary recognition.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

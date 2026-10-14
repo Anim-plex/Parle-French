@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with language learning statistics and preferences",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The Firebase Auth user ID" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "email": { "type": "string", "description": "User email address" },
+        "targetLevel": { "type": "string", "enum": ["A1", "A2", "B1", "B2", "C1"], "description": "Target CEFR level" },
+        "streakDays": { "type": "integer", "description": "Consecutive days active" },
+        "lastActiveDate": { "type": "string", "description": "Last active ISO date string" },
+        "cardsMastered": { "type": "integer", "description": "Total flashcards memorized" },
+        "totalRoleplaySessions": { "type": "integer", "description": "Completed AI roleplays" },
+        "totalQuizzesTaken": { "type": "integer", "description": "Quizzes and exams completed" },
+        "overallFluencyScore": { "type": "integer", "description": "Calculated fluency percentage 0-100" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Document creation timestamp (FieldValue.serverTimestamp)" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Document update timestamp (FieldValue.serverTimestamp)" }
+      },
+      "required": ["userId", "displayName", "targetLevel", "streakDays", "createdAt"]
+    },
+    "FlashcardItem": {
+      "title": "FlashcardItem",
+      "description": "Spaced repetition flashcard for vocabulary and active recall",
+      "type": "object",
+      "properties": {
+        "cardId": { "type": "string", "description": "Unique flashcard identifier" },
+        "userId": { "type": "string", "description": "Owner user ID" },
+        "frenchWord": { "type": "string", "description": "French term or expression" },
+        "gender": { "type": "string", "description": "Gender article e.g. le, la, un, une or none" },
+        "englishMeaning": { "type": "string", "description": "English translation" },
+        "pronunciation": { "type": "string", "description": "IPA phonetic guide" },
+        "exampleSentence": { "type": "string", "description": "French context sentence" },
+        "exampleTranslation": { "type": "string", "description": "English translation of sentence" },
+        "category": { "type": "string", "description": "Vocabulary category e.g. Food, Travel, Exam" },
+        "repetitionCount": { "type": "integer", "description": "Number of times reviewed" },
+        "intervalDays": { "type": "integer", "description": "Days until next review (SM-2)" },
+        "easeFactor": { "type": "number", "description": "SM-2 ease multiplier" },
+        "nextReviewTimestamp": { "type": "integer", "description": "Epoch millisecond for next review" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Document creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Document update timestamp" }
+      },
+      "required": ["cardId", "userId", "frenchWord", "englishMeaning", "repetitionCount", "createdAt"]
+    },
+    "RoleplaySession": {
+      "title": "RoleplaySession",
+      "description": "Record of completed or ongoing AI conversation scenario",
+      "type": "object",
+      "properties": {
+        "sessionId": { "type": "string", "description": "Unique session identifier" },
+        "userId": { "type": "string", "description": "User ID" },
+        "scenarioId": { "type": "string", "description": "Scenario key e.g. cafe, hotel, interview" },
+        "scenarioTitle": { "type": "string", "description": "Display title of the roleplay" },
+        "level": { "type": "string", "description": "CEFR level A1-C1" },
+        "messageCount": { "type": "integer", "description": "Number of exchanged messages" },
+        "feedbackSummary": { "type": "string", "description": "AI evaluation and grammar feedback summary" },
+        "score": { "type": "integer", "description": "Score 0-100" },
+        "completed": { "type": "boolean", "description": "Whether the roleplay reached conclusion" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Session creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Session update timestamp" }
+      },
+      "required": ["sessionId", "userId", "scenarioId", "scenarioTitle", "createdAt"]
+    },
+    "ExamAttempt": {
+      "title": "ExamAttempt",
+      "description": "DELF/DALF exam attempt, essay submission, or quiz result",
+      "type": "object",
+      "properties": {
+        "attemptId": { "type": "string", "description": "Unique attempt identifier" },
+        "userId": { "type": "string", "description": "User ID" },
+        "examType": { "type": "string", "description": "Exam category e.g. DELF_B1, ESSAY, GRAMMAR" },
+        "title": { "type": "string", "description": "Test title" },
+        "score": { "type": "integer", "description": "User achieved score" },
+        "maxScore": { "type": "integer", "description": "Max possible score" },
+        "feedback": { "type": "string", "description": "Detailed AI grading feedback and rubric" },
+        "essayText": { "type": "string", "description": "User submitted essay if applicable" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Attempt timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Update timestamp" }
+      },
+      "required": ["attemptId", "userId", "examType", "title", "score", "maxScore", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Root user profile document"
+    },
+    "/users/{userId}/flashcards/{cardId}": {
+      "schema": "FlashcardItem",
+      "description": "Spaced repetition flashcards belonging to the user"
+    },
+    "/users/{userId}/roleplays/{sessionId}": {
+      "schema": "RoleplaySession",
+      "description": "AI roleplay dialogue logs and feedback scores"
+    },
+    "/users/{userId}/exams/{attemptId}": {
+      "schema": "ExamAttempt",
+      "description": "Quiz, essay, and DELF exam submissions"
+    }
+  }
+}

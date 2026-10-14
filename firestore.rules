@@ -1,0 +1,179 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100 &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 150)) &&
+             data.targetLevel in ['A1', 'A2', 'B1', 'B2', 'C1'] &&
+             data.streakDays is int && data.streakDays >= 0 &&
+             (!('lastActiveDate' in data) || (data.lastActiveDate is string && data.lastActiveDate.size() <= 30)) &&
+             (!('cardsMastered' in data) || (data.cardsMastered is int && data.cardsMastered >= 0)) &&
+             (!('totalRoleplaySessions' in data) || (data.totalRoleplaySessions is int && data.totalRoleplaySessions >= 0)) &&
+             (!('totalQuizzesTaken' in data) || (data.totalQuizzesTaken is int && data.totalQuizzesTaken >= 0)) &&
+             (!('overallFluencyScore' in data) || (data.overallFluencyScore is int && data.overallFluencyScore >= 0 && data.overallFluencyScore <= 100)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    function isValidFlashcard(data) {
+      return data.cardId is string && data.cardId.size() > 0 && data.cardId.size() <= 128 &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.frenchWord is string && data.frenchWord.size() > 0 && data.frenchWord.size() <= 200 &&
+             data.englishMeaning is string && data.englishMeaning.size() > 0 && data.englishMeaning.size() <= 300 &&
+             (!('gender' in data) || (data.gender is string && data.gender.size() <= 20)) &&
+             (!('pronunciation' in data) || (data.pronunciation is string && data.pronunciation.size() <= 100)) &&
+             (!('exampleSentence' in data) || (data.exampleSentence is string && data.exampleSentence.size() <= 500)) &&
+             (!('exampleTranslation' in data) || (data.exampleTranslation is string && data.exampleTranslation.size() <= 500)) &&
+             (!('category' in data) || (data.category is string && data.category.size() <= 50)) &&
+             data.repetitionCount is int && data.repetitionCount >= 0 &&
+             (!('intervalDays' in data) || (data.intervalDays is int && data.intervalDays >= 0)) &&
+             (!('easeFactor' in data) || (data.easeFactor is number && data.easeFactor >= 1.0)) &&
+             (!('nextReviewTimestamp' in data) || (data.nextReviewTimestamp is int)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    function isValidRoleplay(data) {
+      return data.sessionId is string && data.sessionId.size() > 0 && data.sessionId.size() <= 128 &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.scenarioId is string && data.scenarioId.size() > 0 && data.scenarioId.size() <= 100 &&
+             data.scenarioTitle is string && data.scenarioTitle.size() > 0 && data.scenarioTitle.size() <= 200 &&
+             (!('level' in data) || (data.level is string && data.level.size() <= 10)) &&
+             (!('messageCount' in data) || (data.messageCount is int && data.messageCount >= 0)) &&
+             (!('feedbackSummary' in data) || (data.feedbackSummary is string && data.feedbackSummary.size() <= 4000)) &&
+             (!('score' in data) || (data.score is int && data.score >= 0 && data.score <= 100)) &&
+             (!('completed' in data) || data.completed is bool) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    function isValidExam(data) {
+      return data.attemptId is string && data.attemptId.size() > 0 && data.attemptId.size() <= 128 &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.examType is string && data.examType.size() > 0 && data.examType.size() <= 50 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.score is int && data.score >= 0 &&
+             data.maxScore is int && data.maxScore > 0 &&
+             (!('feedback' in data) || (data.feedback is string && data.feedback.size() <= 5000)) &&
+             (!('essayText' in data) || (data.essayText is string && data.essayText.size() <= 8000)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(userId) &&
+                       incoming().userId == request.auth.uid &&
+                       isValidUserProfile(incoming());
+
+      allow update: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'displayName', 'email', 'targetLevel', 'streakDays', 'lastActiveDate',
+                         'cardsMastered', 'totalRoleplaySessions', 'totalQuizzesTaken', 'overallFluencyScore', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+
+      match /flashcards/{cardId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+
+        allow create: if isSignedIn() &&
+                         request.auth.uid == userId &&
+                         isValidId(cardId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().cardId == cardId &&
+                         isValidFlashcard(incoming());
+
+        allow update: if isSignedIn() &&
+                         request.auth.uid == userId &&
+                         incoming().userId == existing().userId &&
+                         incoming().cardId == existing().cardId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidFlashcard(incoming()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'frenchWord', 'gender', 'englishMeaning', 'pronunciation',
+                           'exampleSentence', 'exampleTranslation', 'category',
+                           'repetitionCount', 'intervalDays', 'easeFactor', 'nextReviewTimestamp', 'updatedAt'
+                         ]);
+
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+
+      match /roleplays/{sessionId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+
+        allow create: if isSignedIn() &&
+                         request.auth.uid == userId &&
+                         isValidId(sessionId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().sessionId == sessionId &&
+                         isValidRoleplay(incoming());
+
+        allow update: if isSignedIn() &&
+                         request.auth.uid == userId &&
+                         incoming().userId == existing().userId &&
+                         incoming().sessionId == existing().sessionId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidRoleplay(incoming()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'scenarioTitle', 'level', 'messageCount', 'feedbackSummary', 'score', 'completed', 'updatedAt'
+                         ]);
+
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+
+      match /exams/{attemptId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+
+        allow create: if isSignedIn() &&
+                         request.auth.uid == userId &&
+                         isValidId(attemptId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().attemptId == attemptId &&
+                         isValidExam(incoming());
+
+        allow update: if isSignedIn() &&
+                         request.auth.uid == userId &&
+                         incoming().userId == existing().userId &&
+                         incoming().attemptId == existing().attemptId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidExam(incoming()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'score', 'maxScore', 'feedback', 'essayText', 'updatedAt'
+                         ]);
+
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+    }
+  }
+}
