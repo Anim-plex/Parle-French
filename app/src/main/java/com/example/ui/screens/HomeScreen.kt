@@ -3,6 +3,7 @@ package com.example.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -72,6 +74,22 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val stats = userStats ?: UserStatsEntity()
+    val isDarkTheme = isSystemInDarkTheme()
+
+    // Sync-status chip colors: light pastels in light mode, translucent
+    // tints in dark mode so the chip never reads as a white slab.
+    val syncChipBg = when {
+        isDarkTheme && isSignedIn -> VertSucces.copy(alpha = 0.18f)
+        isDarkTheme -> Color.White.copy(alpha = 0.08f)
+        isSignedIn -> Color(0xFFDCFCE7)
+        else -> Color(0xFFF1F5F9)
+    }
+    val syncChipFg = when {
+        isDarkTheme && isSignedIn -> lerp(VertSucces, Color.White, 0.35f)
+        isDarkTheme -> TextSecondaire
+        isSignedIn -> Color(0xFF15803D)
+        else -> TextSecondaire
+    }
 
     LazyColumn(
         modifier = modifier
@@ -120,7 +138,7 @@ fun HomeScreen(
                     // Cloud Sync Indicator Chip
                     Surface(
                         shape = RoundedCornerShape(20.dp),
-                        color = if (isSignedIn) Color(0xFFDCFCE7) else Color(0xFFF1F5F9),
+                        color = syncChipBg,
                         modifier = Modifier
                             .clickable { onNavigateToProfile() }
                             .testTag("sync_chip")
@@ -132,7 +150,7 @@ fun HomeScreen(
                             Icon(
                                 imageVector = if (isSignedIn) Icons.Default.CloudDone else Icons.Default.CloudOff,
                                 contentDescription = "État de synchronisation",
-                                tint = if (isSignedIn) VertSucces else TextSecondaire,
+                                tint = syncChipFg,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
@@ -140,7 +158,7 @@ fun HomeScreen(
                                 text = if (isSignedIn) "Synchronisé" else "Hors-ligne",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (isSignedIn) Color(0xFF15803D) else TextSecondaire
+                                color = syncChipFg
                             )
                         }
                     }
@@ -366,7 +384,9 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .testTag("spotlight_card"),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF6FF))
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isDarkTheme) BleuRoy.copy(alpha = 0.16f) else Color(0xFFEFF6FF)
+                )
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),

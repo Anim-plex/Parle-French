@@ -1,6 +1,5 @@
 package com.example.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,12 +18,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CloudDone
-import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -40,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,11 +56,10 @@ import com.example.data.repository.FrenchLearningRepository
 import com.example.ui.AuthViewModel
 import com.example.ui.components.CefrLevelBadge
 import com.example.ui.theme.BleuRoy
-import com.example.ui.theme.OrAccent
-import com.example.ui.theme.OrParis
 import com.example.ui.theme.RougeFrance
 import com.example.ui.theme.TextSecondaire
 import com.example.ui.theme.VertSucces
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,6 +79,15 @@ fun ProfileScreen(
     val stats = userStats ?: UserStatsEntity()
     var isSyncing by remember { mutableStateOf(false) }
     var syncSuccessMsg by remember { mutableStateOf<String?>(null) }
+    var levelMessage by remember { mutableStateOf<String?>(null) }
+
+    // Auto-dismiss the level-saved confirmation after a few seconds.
+    LaunchedEffect(levelMessage) {
+        if (levelMessage != null) {
+            delay(3500)
+            levelMessage = null
+        }
+    }
 
     val cefrLevels = listOf(
         "A1" to "Débutant Découverte",
@@ -279,7 +284,17 @@ fun ProfileScreen(
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
                                     .clickable {
-                                        // Save level to repository
+                                        // Persist the chosen level (no-op when unchanged)
+                                        if (stats.targetLevel != lvl) {
+                                            coroutineScope.launch {
+                                                try {
+                                                    repository.updateTargetLevel(lvl)
+                                                    levelMessage = "Niveau cible enregistré : $lvl"
+                                                } catch (e: Exception) {
+                                                    levelMessage = "Impossible d'enregistrer le niveau."
+                                                }
+                                            }
+                                        }
                                     }
                             ) {
                                 Row(
@@ -300,6 +315,18 @@ fun ProfileScreen(
                                     }
                                 }
                             }
+                        }
+
+                        // Feedback after saving a level (auto-dismissed)
+                        if (!levelMessage.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = levelMessage!!,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = VertSucces,
+                                modifier = Modifier.testTag("level_saved_msg")
+                            )
                         }
                     }
                 }

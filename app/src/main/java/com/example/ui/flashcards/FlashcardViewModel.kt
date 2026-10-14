@@ -35,6 +35,15 @@ class FlashcardViewModel(
     private val _isReviewCompleted = MutableStateFlow(false)
     val isReviewCompleted: StateFlow<Boolean> = _isReviewCompleted.asStateFlow()
 
+    /**
+     * Snapshot of the cards in the current review session. The live
+     * due/flashcard lists shrink as cards are reviewed (Room re-emits),
+     * so pinning the session keeps the progress counter and the rating
+     * buttons pointing at the right card until the session is reset.
+     */
+    private val _sessionCards = MutableStateFlow<List<FlashcardEntity>>(emptyList())
+    val sessionCards: StateFlow<List<FlashcardEntity>> = _sessionCards.asStateFlow()
+
     fun flipCard() {
         _isFlipped.value = !_isFlipped.value
     }
@@ -44,6 +53,7 @@ class FlashcardViewModel(
         _currentReviewIndex.value = 0
         _isFlipped.value = false
         _isReviewCompleted.value = false
+        _sessionCards.value = emptyList() // re-snapshot on next read
     }
 
     fun reviewCurrentCard(rating: ReviewRating) {
@@ -67,12 +77,30 @@ class FlashcardViewModel(
         _currentReviewIndex.value = 0
         _isFlipped.value = false
         _isReviewCompleted.value = false
+        _sessionCards.value = emptyList() // re-snapshot on next read
     }
 
+    /**
+     * Cards for the active session. The list is pinned (see [sessionCards])
+     * once a non-empty candidate set exists, so reviewed cards stay in
+     * place for the rest of the session instead of vanishing mid-deck.
+     */
     fun getActiveReviewCards(): List<FlashcardEntity> {
+        val pinned = _sessionCards.value
+        if (pinned.isNotEmpty()) return pinned
         val source = if (dueFlashcards.value.isNotEmpty()) dueFlashcards.value else allFlashcards.value
+        if (source.isEmpty()) return emptyList() // still loading from Room
         val category = _selectedCategory.value
         return if (category == "All") source else source.filter { it.category == category }
+    }
+
+    /** Pins the current session list (safe to call repeatedly / from effects). */
+    fun ensureSessionSnapshot() {
+        if (_sessionCards.value.isNotEmpty()) return
+        val source = if (dueFlashcards.value.isNotEmpty()) dueFlashcards.value else allFlashcards.value
+        if (source.isEmpty()) return
+        val category = _selectedCategory.value
+        _sessionCards.value = if (category == "All") source else source.filter { it.category == category }
     }
 
     fun addCustomFlashcard(

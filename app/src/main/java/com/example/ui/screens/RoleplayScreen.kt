@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -189,6 +191,7 @@ fun RoleplayScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.surface)
+                        .imePadding() // keep the input row above the soft keyboard
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     // Suggested replies scaffolding
@@ -235,8 +238,16 @@ fun RoleplayScreen(
                         // Microphone voice button
                         IconButton(
                             onClick = {
-                                if (speechRecognizer != null) {
-                                    if (isListening) {
+                                if (speechRecognizer == null) {
+                                    // Previously a silent no-op — tell the user why.
+                                    Toast.makeText(
+                                        context,
+                                        "La reconnaissance vocale n'est pas disponible sur cet appareil.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    return@IconButton
+                                }
+                                if (isListening) {
                                         speechRecognizer.stopListening()
                                         isListening = false
                                     } else {
@@ -265,7 +276,6 @@ fun RoleplayScreen(
                                         })
                                         speechRecognizer.startListening(intent)
                                     }
-                                }
                             },
                             modifier = Modifier
                                 .testTag("mic_button")

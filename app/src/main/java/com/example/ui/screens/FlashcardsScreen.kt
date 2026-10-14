@@ -1,10 +1,9 @@
 package com.example.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,14 +17,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.TouchApp
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -34,7 +33,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -45,6 +43,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -90,6 +90,13 @@ fun FlashcardsScreen(
 
     val activeCards = viewModel.getActiveReviewCards()
     var showAddDialog by remember { mutableStateOf(false) }
+
+    // Pin the review session as soon as the card lists are available, so the
+    // progress counter and rating buttons keep pointing at the same cards
+    // while the live due-list shrinks with each answer.
+    LaunchedEffect(allCards.size, dueCards.size, selectedCategory) {
+        viewModel.ensureSessionSnapshot()
+    }
 
     val categories = listOf("All", "Core 500", "Dining", "Travel", "DELF Connectors", "Visual Context", "Custom")
 
@@ -239,160 +246,44 @@ fun FlashcardsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Interactive 3D Flip Flashcard
+                // The rotation drives both the animation and which face is
+                // visible; the back face is counter-rotated so it reads
+                // correctly once the card passes 90°.
+                val flipRotation by animateFloatAsState(
+                    targetValue = if (isFlipped) 180f else 0f,
+                    animationSpec = tween(durationMillis = 550),
+                    label = "flashcardFlip"
+                )
+                val flipDensity = LocalDensity.current
+
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
                         .clickable { viewModel.flipCard() }
+                        .graphicsLayer {
+                            rotationY = flipRotation
+                            cameraDistance = 14f * flipDensity.density
+                        }
                         .testTag("active_flashcard"),
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.SpaceBetween,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            // Top info row
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    GenderBadge(gender = currentCard.gender)
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = Color(0xFFF1F5F9)
-                                    ) {
-                                        Text(
-                                            text = currentCard.category,
-                                            fontSize = 11.sp,
-                                            color = TextSecondaire,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                }
-
-                                FrenchAudioButton(
-                                    textToSpeak = currentCard.frenchWord,
-                                    ttsManager = ttsManager,
-                                    modifier = Modifier.size(36.dp)
-                                )
-                            }
-
-                            // Center Content
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(vertical = 16.dp)
-                            ) {
-                                Text(
-                                    text = currentCard.frenchWord,
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = BleuRoy,
-                                    textAlign = TextAlign.Center
-                                )
-
-                                if (currentCard.pronunciation.isNotBlank()) {
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = currentCard.pronunciation,
-                                        fontSize = 14.sp,
-                                        color = TextSecondaire
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(20.dp))
-
-                                // Flipped Details
-                                if (isFlipped) {
-                                    Text(
-                                        text = currentCard.englishMeaning,
-                                        style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        textAlign = TextAlign.Center
-                                    )
-
-                                    if (currentCard.exampleSentence.isNotBlank()) {
-                                        Spacer(modifier = Modifier.height(16.dp))
-                                        Surface(
-                                            shape = RoundedCornerShape(12.dp),
-                                            color = Color(0xFFF8FAFC),
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Column(modifier = Modifier.padding(12.dp)) {
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                                    modifier = Modifier.fillMaxWidth()
-                                                ) {
-                                                    Text(
-                                                        text = "Exemple en contexte :",
-                                                        fontSize = 11.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = TextSecondaire
-                                                    )
-                                                    FrenchAudioButton(
-                                                        textToSpeak = currentCard.exampleSentence,
-                                                        ttsManager = ttsManager,
-                                                        modifier = Modifier.size(24.dp)
-                                                    )
-                                                }
-                                                Spacer(modifier = Modifier.height(4.dp))
-                                                Text(
-                                                    text = currentCard.exampleSentence,
-                                                    fontSize = 13.sp,
-                                                    fontWeight = FontWeight.Medium,
-                                                    color = MaterialTheme.colorScheme.onSurface
-                                                )
-                                                if (currentCard.exampleTranslation.isNotBlank()) {
-                                                    Text(
-                                                        text = currentCard.exampleTranslation,
-                                                        fontSize = 12.sp,
-                                                        color = TextSecondaire,
-                                                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(top = 16.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.TouchApp,
-                                            contentDescription = null,
-                                            tint = TextSecondaire,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "Touchez la carte pour révéler la signification",
-                                            fontSize = 12.sp,
-                                            color = TextSecondaire
-                                        )
-                                    }
-                                }
-                            }
-
-                            // Bottom Hint
-                            Text(
-                                text = if (isFlipped) "Évaluez votre rappel ci-dessous" else "Rappel actif : devinez avant de retourner !",
-                                fontSize = 11.sp,
-                                color = TextSecondaire
-                            )
-                        }
+                    if (flipRotation <= 90f) {
+                        FlashcardFrontFace(
+                            card = currentCard,
+                            ttsManager = ttsManager,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        FlashcardBackFace(
+                            card = currentCard,
+                            ttsManager = ttsManager,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer { rotationY = 180f }
+                        )
                     }
                 }
 
@@ -467,7 +358,12 @@ fun FlashcardsScreen(
             onDismissRequest = { showAddDialog = false },
             title = { Text("Ajouter un mot de vocabulaire") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Scrollable: the dialog now carries six inputs and would
+                // otherwise clip the last fields on shorter screens.
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
                     OutlinedTextField(
                         value = frenchWord,
                         onValueChange = { frenchWord = it },
@@ -501,6 +397,20 @@ fun FlashcardsScreen(
                         value = exampleSentence,
                         onValueChange = { exampleSentence = it },
                         label = { Text("Exemple de phrase en français") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = exampleTranslation,
+                        onValueChange = { exampleTranslation = it },
+                        label = { Text("Traduction de l'exemple (anglais)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = pronunciation,
+                        onValueChange = { pronunciation = it },
+                        label = { Text("Prononciation (API)") },
+                        placeholder = { Text("ex. bɔ̃ʒuʁ") },
+                        supportingText = { Text("Optionnel — affichée sous le mot sur la carte") },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -559,6 +469,205 @@ fun Sm2RatingButton(
         ) {
             Text(text = label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = color)
             Text(text = subLabel, fontSize = 10.sp, color = color.copy(alpha = 0.8f))
+        }
+    }
+}
+
+/** Gender, category and audio controls shown at the top of both faces. */
+@Composable
+private fun FlashcardTopRow(
+    card: FlashcardEntity,
+    ttsManager: FrenchTtsManager
+) {
+    val isDarkTheme = isSystemInDarkTheme()
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            GenderBadge(gender = card.gender)
+            Spacer(modifier = Modifier.width(6.dp))
+            Surface(
+                shape = RoundedCornerShape(6.dp),
+                color = if (isDarkTheme) Color.White.copy(alpha = 0.1f) else Color(0xFFF1F5F9)
+            ) {
+                Text(
+                    text = card.category,
+                    fontSize = 11.sp,
+                    color = TextSecondaire,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
+        }
+
+        FrenchAudioButton(
+            textToSpeak = card.frenchWord,
+            ttsManager = ttsManager,
+            modifier = Modifier.size(36.dp)
+        )
+    }
+}
+
+/** Question side of the card: word + pronunciation + tap hint. */
+@Composable
+private fun FlashcardFrontFace(
+    card: FlashcardEntity,
+    ttsManager: FrenchTtsManager,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.padding(24.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            FlashcardTopRow(card = card, ttsManager = ttsManager)
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(vertical = 16.dp)
+            ) {
+                Text(
+                    text = card.frenchWord,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = BleuRoy,
+                    textAlign = TextAlign.Center
+                )
+
+                if (card.pronunciation.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = card.pronunciation,
+                        fontSize = 14.sp,
+                        color = TextSecondaire
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.TouchApp,
+                        contentDescription = null,
+                        tint = TextSecondaire,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Touchez la carte pour révéler la signification",
+                        fontSize = 12.sp,
+                        color = TextSecondaire
+                    )
+                }
+            }
+
+            Text(
+                text = "Rappel actif : devinez avant de retourner !",
+                fontSize = 11.sp,
+                color = TextSecondaire
+            )
+        }
+    }
+}
+
+/** Answer side of the card: meaning + contextual example (scrollable). */
+@Composable
+private fun FlashcardBackFace(
+    card: FlashcardEntity,
+    ttsManager: FrenchTtsManager,
+    modifier: Modifier = Modifier
+) {
+    val isDarkTheme = isSystemInDarkTheme()
+    Box(
+        modifier = modifier.padding(24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            FlashcardTopRow(card = card, ttsManager = ttsManager)
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = card.frenchWord,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.ExtraBold,
+                color = BleuRoy,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = card.englishMeaning,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
+
+            if (card.exampleSentence.isNotBlank()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isDarkTheme) Color.White.copy(alpha = 0.06f) else Color(0xFFF8FAFC),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Exemple en contexte :",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextSecondaire
+                            )
+                            FrenchAudioButton(
+                                textToSpeak = card.exampleSentence,
+                                ttsManager = ttsManager,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = card.exampleSentence,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (card.exampleTranslation.isNotBlank()) {
+                            Text(
+                                text = card.exampleTranslation,
+                                fontSize = 12.sp,
+                                color = TextSecondaire,
+                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Évaluez votre rappel ci-dessous",
+                fontSize = 11.sp,
+                color = TextSecondaire,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
         }
     }
 }

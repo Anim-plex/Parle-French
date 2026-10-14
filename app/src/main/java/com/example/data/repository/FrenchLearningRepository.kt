@@ -66,8 +66,21 @@ class FrenchLearningRepository(
         updateStatsAfterExam(result.score, result.maxScore)
     }
 
-    suspend fun recordRoleplayCompleted(scenarioTitle: String, score: Int) = withContext(Dispatchers.IO) {
+    /**
+     * Persist the learner's target CEFR level (chosen in Profile screen).
+     * Mirrors [recordRoleplayCompleted]: update local stats, then push to cloud.
+     */
+    suspend fun updateTargetLevel(level: String) = withContext(Dispatchers.IO) {
         val currentUserId = auth.currentUser?.uid ?: "local_user"
+        val stats = userStatsDao.getStats(currentUserId).firstOrNull() ?: UserStatsEntity(userId = currentUserId)
+        if (stats.targetLevel != level) {
+            val newStats = stats.copy(targetLevel = level)
+            userStatsDao.insertOrUpdate(newStats)
+            syncStatsToCloud(newStats)
+        }
+    }
+
+    suspend fun recordRoleplayCompleted(scenarioTitle: String, score: Int) = withContext(Dispatchers.IO) {        val currentUserId = auth.currentUser?.uid ?: "local_user"
         val stats = userStatsDao.getStats(currentUserId).firstOrNull() ?: UserStatsEntity(userId = currentUserId)
         val newStats = stats.copy(
             roleplaysCompleted = stats.roleplaysCompleted + 1,

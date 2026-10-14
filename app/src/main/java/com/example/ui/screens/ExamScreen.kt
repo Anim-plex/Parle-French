@@ -1,8 +1,6 @@
 package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,12 +10,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -25,12 +23,7 @@ import androidx.compose.material.icons.filled.AssignmentTurnedIn
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Grade
-import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.Spellcheck
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -61,11 +54,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.CefrLevelBadge
-import com.example.ui.exam.ExamPrompt
 import com.example.ui.exam.ExamViewModel
 import com.example.ui.theme.BleuRoy
 import com.example.ui.theme.OrAccent
@@ -232,10 +223,17 @@ fun ExamScreen(
                 // Active Essay Writing & Grading View
                 val prompt = selectedPrompt!!
                 val wordCount = essayText.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }.size
+                // Parse the prompt's own target (e.g. "60-80 mots" → 60) so the
+                // indicator turns green at the recommended length, not at a
+                // one-size-fits-all 30 words.
+                val targetWords = remember(prompt.id) {
+                    Regex("\\d+").find(prompt.targetWordCount)?.value?.toIntOrNull() ?: 0
+                }
 
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
+                        .imePadding() // keep the editor + submit button visible above the keyboard
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
@@ -284,10 +282,11 @@ fun ExamScreen(
                                 fontSize = 14.sp
                             )
                             Text(
-                                text = "$wordCount mots rédigés",
+                                text = "$wordCount mots rédigés" +
+                                    if (targetWords > 0) " (cible : ~$targetWords)" else "",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (wordCount >= 30) VertSucces else TextSecondaire
+                                color = if (targetWords > 0 && wordCount >= targetWords) VertSucces else TextSecondaire
                             )
                         }
                     }
