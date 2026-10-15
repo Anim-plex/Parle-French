@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,11 +55,11 @@ import androidx.compose.ui.unit.sp
 import com.example.data.local.UserStatsEntity
 import com.example.data.repository.FrenchLearningRepository
 import com.example.ui.AuthViewModel
-import com.example.ui.components.CefrLevelBadge
-import com.example.ui.theme.BleuRoy
-import com.example.ui.theme.RougeFrance
-import com.example.ui.theme.TextSecondaire
-import com.example.ui.theme.VertSucces
+import com.example.ui.components.CefrBadge
+import com.example.ui.theme.FrenchRed
+import com.example.ui.theme.RoyalBlue
+import com.example.ui.theme.SuccessGreen
+import com.example.ui.theme.TextSecondary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -81,7 +82,6 @@ fun ProfileScreen(
     var syncSuccessMsg by remember { mutableStateOf<String?>(null) }
     var levelMessage by remember { mutableStateOf<String?>(null) }
 
-    // Auto-dismiss the level-saved confirmation after a few seconds.
     LaunchedEffect(levelMessage) {
         if (levelMessage != null) {
             delay(3500)
@@ -90,17 +90,17 @@ fun ProfileScreen(
     }
 
     val cefrLevels = listOf(
-        "A1" to "Débutant Découverte",
-        "A2" to "Élémentaire Survie",
-        "B1" to "Intermédiaire Seuil",
-        "B2" to "Avancé Indépendant",
-        "C1" to "Autonome / Fluence"
+        "A1" to "Beginner — discovery",
+        "A2" to "Elementary — survival",
+        "B1" to "Intermediate — threshold",
+        "B2" to "Upper-intermediate — independent",
+        "C1" to "Advanced — fluency"
     )
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Profil & Synchronisation", fontWeight = FontWeight.Bold) },
+                title = { Text("Profile & Sync", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         }
@@ -112,13 +112,15 @@ fun ProfileScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // User Account Card
+            // Account card
             item {
                 Card(
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    modifier = Modifier.fillMaxWidth().testTag("profile_account_card")
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("profile_account_card")
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Row(
@@ -127,14 +129,14 @@ fun ProfileScreen(
                         ) {
                             Surface(
                                 shape = CircleShape,
-                                color = if (currentUser != null) BleuRoy else Color(0xFFE2E8F0),
+                                color = if (currentUser != null) RoyalBlue else Color(0xFFE2E8F0),
                                 modifier = Modifier.size(54.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         imageVector = Icons.Default.Person,
                                         contentDescription = null,
-                                        tint = if (currentUser != null) Color.White else TextSecondaire,
+                                        tint = if (currentUser != null) Color.White else TextSecondary,
                                         modifier = Modifier.size(32.dp)
                                     )
                                 }
@@ -149,23 +151,22 @@ fun ProfileScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = currentUser?.email ?: "Mode local (hors-ligne)",
+                                    text = currentUser?.email ?: "Local mode (offline)",
                                     fontSize = 12.sp,
-                                    color = TextSecondaire
+                                    color = TextSecondary
                                 )
                             }
 
-                            CefrLevelBadge(level = stats.targetLevel)
+                            CefrBadge(level = stats.targetLevel)
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Google Sign-In or Sign-Out Button
                         if (currentUser == null) {
                             Button(
                                 onClick = { authViewModel.signInWithGoogle(context) },
                                 enabled = !isLoading,
-                                colors = ButtonDefaults.buttonColors(containerColor = BleuRoy),
+                                colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue),
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -174,17 +175,17 @@ fun ProfileScreen(
                                 if (isLoading) {
                                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Connexion Google...")
+                                    Text("Signing in…")
                                 } else {
                                     Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Se connecter avec Google")
+                                    Text("Sign in with Google")
                                 }
                             }
                             Text(
-                                text = "Sauvegardez vos progrès dans le Cloud pour les retrouver sur tous vos appareils.",
+                                text = "Save your progress to the cloud and pick it up on any device.",
                                 fontSize = 11.sp,
-                                color = TextSecondaire,
+                                color = TextSecondary,
                                 modifier = Modifier.padding(top = 6.dp)
                             )
                         } else {
@@ -199,7 +200,7 @@ fun ProfileScreen(
                                         coroutineScope.launch {
                                             try {
                                                 repository.performFullCloudSync()
-                                                syncSuccessMsg = "Données synchronisées avec succès !"
+                                                syncSuccessMsg = "Data synced successfully!"
                                             } finally {
                                                 isSyncing = false
                                             }
@@ -208,15 +209,17 @@ fun ProfileScreen(
                                     enabled = !isSyncing,
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEFF6FF)),
                                     shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.weight(1f).testTag("sync_now_btn")
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .testTag("sync_now_btn")
                                 ) {
                                     if (isSyncing) {
-                                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = BleuRoy, strokeWidth = 2.dp)
+                                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = RoyalBlue, strokeWidth = 2.dp)
                                     } else {
-                                        Icon(Icons.Default.CloudSync, contentDescription = null, tint = BleuRoy, modifier = Modifier.size(16.dp))
+                                        Icon(Icons.Default.CloudSync, contentDescription = null, tint = RoyalBlue, modifier = Modifier.size(16.dp))
                                     }
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Synchroniser", color = BleuRoy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text("Sync now", color = RoyalBlue, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
 
                                 OutlinedButton(
@@ -226,7 +229,7 @@ fun ProfileScreen(
                                 ) {
                                     Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Déconnexion", fontSize = 12.sp)
+                                    Text("Sign out", fontSize = 12.sp)
                                 }
                             }
                         }
@@ -236,7 +239,7 @@ fun ProfileScreen(
                             Text(
                                 text = errorMessage!!,
                                 fontSize = 12.sp,
-                                color = RougeFrance
+                                color = FrenchRed
                             )
                         }
 
@@ -245,7 +248,7 @@ fun ProfileScreen(
                             Text(
                                 text = syncSuccessMsg!!,
                                 fontSize = 12.sp,
-                                color = VertSucces,
+                                color = SuccessGreen,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -253,7 +256,7 @@ fun ProfileScreen(
                 }
             }
 
-            // Target CEFR Level Selector
+            // Target CEFR level selector
             item {
                 Card(
                     shape = RoundedCornerShape(18.dp),
@@ -263,14 +266,14 @@ fun ProfileScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Niveau Cible CECRL",
+                            text = "Target CEFR level",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Ajustez la complexité des jeux de rôle et des examens proposés.",
+                            text = "Adjusts the complexity of the roleplays and exams you are offered.",
                             fontSize = 12.sp,
-                            color = TextSecondaire,
+                            color = TextSecondary,
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
 
@@ -278,20 +281,19 @@ fun ProfileScreen(
                             val isSelected = stats.targetLevel == lvl
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
-                                color = if (isSelected) BleuRoy.copy(alpha = 0.1f) else Color.Transparent,
-                                border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, BleuRoy) else null,
+                                color = if (isSelected) RoyalBlue.copy(alpha = 0.1f) else Color.Transparent,
+                                border = if (isSelected) BorderStroke(1.5.dp, RoyalBlue) else null,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
                                     .clickable {
-                                        // Persist the chosen level (no-op when unchanged)
                                         if (stats.targetLevel != lvl) {
                                             coroutineScope.launch {
                                                 try {
                                                     repository.updateTargetLevel(lvl)
-                                                    levelMessage = "Niveau cible enregistré : $lvl"
+                                                    levelMessage = "Target level saved: $lvl"
                                                 } catch (e: Exception) {
-                                                    levelMessage = "Impossible d'enregistrer le niveau."
+                                                    levelMessage = "Could not save the level."
                                                 }
                                             }
                                         }
@@ -301,30 +303,29 @@ fun ProfileScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
                                 ) {
-                                    CefrLevelBadge(level = lvl)
+                                    CefrBadge(level = lvl)
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Text(
                                         text = desc,
                                         fontSize = 13.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) BleuRoy else MaterialTheme.colorScheme.onSurface,
+                                        color = if (isSelected) RoyalBlue else MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier.weight(1f)
                                     )
                                     if (isSelected) {
-                                        Icon(Icons.Default.Check, contentDescription = null, tint = BleuRoy)
+                                        Icon(Icons.Default.Check, contentDescription = null, tint = RoyalBlue)
                                     }
                                 }
                             }
                         }
 
-                        // Feedback after saving a level (auto-dismissed)
                         if (!levelMessage.isNullOrBlank()) {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = levelMessage!!,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = VertSucces,
+                                color = SuccessGreen,
                                 modifier = Modifier.testTag("level_saved_msg")
                             )
                         }
@@ -332,7 +333,7 @@ fun ProfileScreen(
                 }
             }
 
-            // Offline & Cloud Cache Information
+            // Offline & cloud info
             item {
                 Card(
                     shape = RoundedCornerShape(18.dp),
@@ -342,15 +343,15 @@ fun ProfileScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Stockage Hors-Ligne & Données",
+                            text = "Offline storage & data",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Toutes vos cartes mémoire, vos résultats d'examens et vos scores sont stockés localement sur cet appareil via Room Database pour un accès complet sans connexion internet. Lorsque vous êtes connecté, ils sont synchronisés en temps réel avec Firebase Firestore.",
+                            text = "Your flashcards, exam results and scores are stored locally on this device with Room for full offline access. When you're signed in, they also sync to Firebase Firestore in real time.",
                             fontSize = 12.sp,
-                            color = TextSecondaire,
+                            color = TextSecondary,
                             lineHeight = 18.sp
                         )
                     }

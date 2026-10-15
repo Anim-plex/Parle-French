@@ -104,7 +104,7 @@ class FrenchAiService {
                 RoleplayTurnResult(
                     partnerReplyFrench = json.optString("partnerReplyFrench", "Bonjour ! Très heureux de discuter avec vous."),
                     partnerReplyEnglish = json.optString("partnerReplyEnglish", "Hello! Very happy to chat with you."),
-                    grammarFeedback = json.optString("grammarFeedback", "Bonne prononciation et structure claire !"),
+                    grammarFeedback = json.optString("grammarFeedback", "Good pronunciation and a clear structure!"),
                     suggestedReplies = suggestions.ifEmpty {
                         listOf("Merci beaucoup !", "Pourriez-vous répéter ?", "Je comprends, continuons.")
                     }
@@ -119,7 +119,7 @@ class FrenchAiService {
                 RoleplayTurnResult(
                     partnerReplyFrench = "Très intéressant ! Pouvez-vous m'en dire un peu plus ?",
                     partnerReplyEnglish = "Very interesting! Can you tell me a bit more about that?",
-                    grammarFeedback = "Votre phrase est compréhensible. Continuez à pratiquer l'accord des adjectifs.",
+                    grammarFeedback = "Your sentence is understandable. Keep practising adjective agreement.",
                     suggestedReplies = listOf("D'accord, avec plaisir.", "Oui, par exemple...", "Pouvez-vous m'aider ?")
                 )
             }
@@ -264,9 +264,9 @@ class FrenchAiService {
                     vocabularyScore = json.optInt("vocabularyScore", 4),
                     coherenceScore = json.optInt("coherenceScore", 5),
                     taskFulfillmentScore = json.optInt("taskFulfillmentScore", 4),
-                    detailedFeedback = json.optString("detailedFeedback", "Très bon travail global. Votre argumentation est claire et le vocabulaire est varié."),
+                    detailedFeedback = json.optString("detailedFeedback", "Solid overall work. Your argument is clear and your vocabulary is varied."),
                     suggestedCorrections = corrections.ifEmpty {
-                        listOf("Attention aux accords des adjectifs qualificatifs.", "Variez les connecteurs logiques (par ailleurs, en revanche).")
+                        listOf("Watch adjective agreement.", "Vary your linking words (par ailleurs, en revanche).")
                     }
                 )
             } catch (e: TimeoutCancellationException) {
@@ -279,13 +279,13 @@ class FrenchAiService {
                 ExamGradingResult(
                     score = 17,
                     maxScore = 25,
-                    cefrAssessment = "$level Evalué",
+                    cefrAssessment = "$level assessed",
                     grammarScore = 4,
                     vocabularyScore = 4,
                     coherenceScore = 5,
                     taskFulfillmentScore = 4,
-                    detailedFeedback = "Votre texte répond aux consignes. Poursuivez l'effort sur les temps du passé (passé composé vs imparfait).",
-                    suggestedCorrections = listOf("Pensez à structurer votre texte avec une introduction et une conclusion claires.")
+                    detailedFeedback = "Your text answers the task. Keep working on past tenses (passé composé vs imparfait).",
+                    suggestedCorrections = listOf("Structure your text with a clear introduction and conclusion.")
                 )
             }
         }

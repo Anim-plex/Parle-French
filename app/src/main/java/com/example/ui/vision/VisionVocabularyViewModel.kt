@@ -17,6 +17,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+/**
+ * [title] is the English chip label; [frenchTitle] is the French name of the
+ * scene, shown to the learner as part of the content.
+ */
 data class ScenePreset(
     val id: String,
     val title: String,
@@ -36,14 +40,14 @@ class VisionVocabularyViewModel(
             title = "Parisian Café Terrace",
             frenchTitle = "Terrasse de Café Parisien",
             drawableResId = R.drawable.french_cafe_banner_1792000877892,
-            description = "Explore vocabulary for coffee, croissants, wicker chairs, cobblestones, and bistro facades."
+            description = "Vocabulary for coffee, croissants, wicker chairs, cobblestones and bistro facades."
         ),
         ScenePreset(
             id = "preset_market",
             title = "French Open-Air Market",
             frenchTitle = "Marché Provençal et Boulangerie",
             drawableResId = R.drawable.french_market_scene_1792000895580,
-            description = "Discover vocabulary for fresh baguettes, cheeses, sun-ripened tomatoes, and market stalls."
+            description = "Vocabulary for fresh baguettes, cheeses, sun-ripened tomatoes and market stalls."
         )
     )
 
@@ -72,7 +76,7 @@ class VisionVocabularyViewModel(
             _selectedBitmap.value = bitmap
             analyzeBitmap(bitmap)
         } catch (e: Exception) {
-            _statusMessage.value = "Impossible de charger l'image prédéfinie."
+            _statusMessage.value = "Could not load the sample image."
         }
     }
 
@@ -88,7 +92,7 @@ class VisionVocabularyViewModel(
                     analyzeBitmap(bitmap)
                 }
             } catch (e: Exception) {
-                _statusMessage.value = "Erreur lors du chargement de l'image sélectionnée."
+                _statusMessage.value = "Could not load the selected image."
             }
         }
     }
@@ -106,9 +110,9 @@ class VisionVocabularyViewModel(
             try {
                 val results = aiService.analyzeImageForVocabulary(bitmap)
                 _detectedItems.value = results
-                _statusMessage.value = "${results.size} objets identifiés en français !"
+                _statusMessage.value = "${results.size} objects identified in French!"
             } catch (e: Exception) {
-                _statusMessage.value = "Analyse visuelle terminée avec les mots clés de la scène."
+                _statusMessage.value = "Image analysis finished with the key words for this scene."
             } finally {
                 _isAnalyzing.value = false
             }
@@ -124,7 +128,7 @@ class VisionVocabularyViewModel(
             pronunciation = item.pronunciationIpa,
             exampleSentence = item.exampleSentenceFrench,
             exampleTranslation = item.exampleSentenceEnglish,
-            category = "Visual Context",
+            category = "Visual",
             repetitionCount = 0,
             intervalDays = 1,
             easeFactor = 2.5
@@ -143,7 +147,7 @@ class VisionVocabularyViewModel(
                     saveItemToFlashcards(item)
                 }
             }
-            _statusMessage.value = "Tous les objets ont été ajoutés à vos cartes mémoire !"
+            _statusMessage.value = "All objects were added to your flashcards!"
         }
     }
 }

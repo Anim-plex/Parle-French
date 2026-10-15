@@ -39,10 +39,10 @@ abstract class AppDatabase : RoomDatabase() {
                             database.userStatsDao().insertOrUpdate(
                                 UserStatsEntity(
                                     userId = "local_user",
-                                    displayName = "Apprenant",
+                                    displayName = "Learner",
                                     targetLevel = "B1",
                                     streakDays = 1,
-                                    lastActiveDate = "Aujourd'hui",
+                                    lastActiveDate = "Today",
                                     cardsMastered = 4,
                                     fluencyScore = 24,
                                     roleplaysCompleted = 0,

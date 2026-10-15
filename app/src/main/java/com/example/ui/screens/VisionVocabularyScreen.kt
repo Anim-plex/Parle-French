@@ -2,11 +2,13 @@ package com.example.ui.screens
 
 import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,11 +23,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Image
@@ -37,7 +37,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -49,31 +48,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.ai.VisualVocabularyItem
 import com.example.domain.FrenchTtsManager
-import com.example.ui.components.CefrLevelBadge
-import com.example.ui.components.FrenchAudioButton
+import com.example.ui.components.CefrBadge
 import com.example.ui.components.GenderBadge
-import com.example.ui.theme.BleuRoy
-import com.example.ui.theme.OrAccent
-import com.example.ui.theme.OrClair
-import com.example.ui.theme.TextSecondaire
-import com.example.ui.theme.VertSucces
-import com.example.ui.vision.ScenePreset
+import com.example.ui.components.PronounceButton
+import com.example.ui.theme.RoyalBlue
+import com.example.ui.theme.SuccessGreen
+import com.example.ui.theme.TextSecondary
 import com.example.ui.vision.VisionVocabularyViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -90,15 +83,16 @@ fun VisionVocabularyScreen(
     val isAnalyzing by viewModel.isAnalyzing.collectAsState()
     val statusMessage by viewModel.statusMessage.collectAsState()
     val savedCards by viewModel.savedCardIds.collectAsState()
+    val isDark = isSystemInDarkTheme()
 
-    // Initialize with first preset if nothing loaded yet
+    // Load the first sample scene if nothing is on screen yet.
     LaunchedEffect(Unit) {
         if (selectedBitmap == null && viewModel.presets.isNotEmpty()) {
             viewModel.selectPreset(context, viewModel.presets.first())
         }
     }
 
-    // Android Photo Picker launcher (Zero-permission mandated by Play policy)
+    // Android Photo Picker (no storage permission required).
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
@@ -107,7 +101,6 @@ fun VisionVocabularyScreen(
         }
     }
 
-    // Camera launcher
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap: Bitmap? ->
@@ -119,7 +112,7 @@ fun VisionVocabularyScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Vision & Objets Réels", fontWeight = FontWeight.Bold) },
+                title = { Text("Vision & Real Objects", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         }
@@ -131,21 +124,19 @@ fun VisionVocabularyScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Introductory Header
             item {
                 Text(
-                    text = "Apprenez le vocabulaire français en observant le monde réel. L'IA identifie les objets, leur genre (le/la) et génère des phrases authentiques.",
+                    text = "Learn French vocabulary by looking at the real world. The AI names the objects, gives their gender (le/la) and writes authentic sentences.",
                     fontSize = 13.sp,
-                    color = TextSecondaire,
+                    color = TextSecondary,
                     lineHeight = 18.sp
                 )
             }
 
-            // Image Source Controls (Presets, Photo Picker, Camera)
             item {
                 Column {
                     Text(
-                        text = "Scènes Prédéfinies ou Vos Photos :",
+                        text = "Sample scenes or your own photos:",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground,
@@ -157,14 +148,14 @@ fun VisionVocabularyScreen(
                             val isSelected = selectedPreset?.id == preset.id
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
-                                color = if (isSelected) BleuRoy else Color(0xFFF1F5F9),
+                                color = if (isSelected) RoyalBlue else Color(0xFFF1F5F9),
                                 modifier = Modifier
                                     .clickable { viewModel.selectPreset(context, preset) }
                                     .testTag("preset_btn_${preset.id}")
                             ) {
                                 Text(
-                                    text = preset.frenchTitle,
-                                    color = if (isSelected) Color.White else TextSecondaire,
+                                    text = preset.title,
+                                    color = if (isSelected) Color.White else TextSecondary,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
@@ -176,13 +167,11 @@ fun VisionVocabularyScreen(
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
                                 color = Color(0xFFEFF6FF),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBFDBFE)),
+                                border = BorderStroke(1.dp, Color(0xFFBFDBFE)),
                                 modifier = Modifier
                                     .clickable {
                                         photoPickerLauncher.launch(
-                                            androidx.activity.result.PickVisualMediaRequest(
-                                                ActivityResultContracts.PickVisualMedia.ImageOnly
-                                            )
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                                         )
                                     }
                                     .testTag("pick_gallery_btn")
@@ -191,9 +180,9 @@ fun VisionVocabularyScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                                 ) {
-                                    Icon(Icons.Default.Image, contentDescription = null, tint = BleuRoy, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Image, contentDescription = null, tint = RoyalBlue, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Galerie", color = BleuRoy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text("Gallery", color = RoyalBlue, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -202,7 +191,7 @@ fun VisionVocabularyScreen(
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
                                 color = Color(0xFFEFF6FF),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBFDBFE)),
+                                border = BorderStroke(1.dp, Color(0xFFBFDBFE)),
                                 modifier = Modifier
                                     .clickable { cameraLauncher.launch(null) }
                                     .testTag("take_photo_btn")
@@ -211,9 +200,9 @@ fun VisionVocabularyScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                                 ) {
-                                    Icon(Icons.Default.CameraAlt, contentDescription = null, tint = BleuRoy, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.CameraAlt, contentDescription = null, tint = RoyalBlue, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Prendre Photo", color = BleuRoy, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text("Take photo", color = RoyalBlue, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -221,7 +210,6 @@ fun VisionVocabularyScreen(
                 }
             }
 
-            // Image Preview Canvas
             item {
                 Card(
                     shape = RoundedCornerShape(20.dp),
@@ -236,7 +224,7 @@ fun VisionVocabularyScreen(
                         if (selectedBitmap != null) {
                             Image(
                                 bitmap = selectedBitmap!!.asImageBitmap(),
-                                contentDescription = "Scène analysée",
+                                contentDescription = "Scene being analysed",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize()
                             )
@@ -253,7 +241,7 @@ fun VisionVocabularyScreen(
                                     CircularProgressIndicator(color = Color.White, strokeWidth = 3.dp)
                                     Spacer(modifier = Modifier.height(10.dp))
                                     Text(
-                                        text = "Analyse des objets par l'IA...",
+                                        text = "Analysing objects with AI…",
                                         color = Color.White,
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Medium
@@ -265,7 +253,6 @@ fun VisionVocabularyScreen(
                 }
             }
 
-            // Results Header with "Tout Ajouter"
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -274,7 +261,7 @@ fun VisionVocabularyScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Objets & Vocabulaire Identifiés",
+                            text = "Detected objects & vocabulary",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -282,7 +269,7 @@ fun VisionVocabularyScreen(
                             Text(
                                 text = statusMessage!!,
                                 fontSize = 11.sp,
-                                color = VertSucces,
+                                color = SuccessGreen,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -291,19 +278,18 @@ fun VisionVocabularyScreen(
                     if (detectedItems.isNotEmpty()) {
                         Button(
                             onClick = { viewModel.saveAllDetectedItems() },
-                            colors = ButtonDefaults.buttonColors(containerColor = VertSucces),
+                            colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.testTag("save_all_items_btn")
                         ) {
                             Icon(Icons.Default.PlaylistAddCheck, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Tout ajouter", fontSize = 11.sp)
+                            Text("Add all", fontSize = 11.sp)
                         }
                     }
                 }
             }
 
-            // Detected Objects List
             items(detectedItems) { item ->
                 val isSaved = savedCards.contains(item.frenchWord)
                 Card(
@@ -327,20 +313,20 @@ fun VisionVocabularyScreen(
                                     text = item.frenchWord,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = BleuRoy
+                                    color = RoyalBlue
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = item.pronunciationIpa,
                                     fontSize = 12.sp,
-                                    color = TextSecondaire
+                                    color = TextSecondary
                                 )
                             }
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                CefrLevelBadge(level = item.cefrLevel)
+                                CefrBadge(level = item.cefrLevel)
                                 Spacer(modifier = Modifier.width(4.dp))
-                                FrenchAudioButton(
+                                PronounceButton(
                                     textToSpeak = "${item.gender} ${item.frenchWord}",
                                     ttsManager = ttsManager,
                                     modifier = Modifier.size(32.dp)
@@ -358,10 +344,9 @@ fun VisionVocabularyScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Context sentence
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFFF8FAFC),
+                            color = if (isDark) Color.White.copy(alpha = 0.06f) else Color(0xFFF8FAFC),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(10.dp)) {
@@ -377,7 +362,7 @@ fun VisionVocabularyScreen(
                                         color = MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier.weight(1f)
                                     )
-                                    FrenchAudioButton(
+                                    PronounceButton(
                                         textToSpeak = item.exampleSentenceFrench,
                                         ttsManager = ttsManager,
                                         modifier = Modifier.size(24.dp)
@@ -386,15 +371,14 @@ fun VisionVocabularyScreen(
                                 Text(
                                     text = item.exampleSentenceEnglish,
                                     fontSize = 11.sp,
-                                    color = TextSecondaire,
-                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                    color = TextSecondary,
+                                    fontStyle = FontStyle.Italic
                                 )
                             }
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // Save to Flashcards button
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.End
@@ -404,9 +388,9 @@ fun VisionVocabularyScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
                                 ) {
-                                    Icon(Icons.Default.Check, contentDescription = null, tint = VertSucces, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Dans vos cartes", fontSize = 12.sp, color = VertSucces, fontWeight = FontWeight.Bold)
+                                    Text("In your cards", fontSize = 12.sp, color = SuccessGreen, fontWeight = FontWeight.Bold)
                                 }
                             } else {
                                 OutlinedButton(
@@ -416,7 +400,7 @@ fun VisionVocabularyScreen(
                                 ) {
                                     Icon(Icons.Default.AddCircle, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Ajouter aux cartes SRS", fontSize = 12.sp)
+                                    Text("Add to SRS cards", fontSize = 12.sp)
                                 }
                             }
                         }

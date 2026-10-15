@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,15 +57,14 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.components.CefrLevelBadge
+import com.example.ui.components.CefrBadge
 import com.example.ui.exam.ExamViewModel
-import com.example.ui.theme.BleuRoy
-import com.example.ui.theme.OrAccent
-import com.example.ui.theme.OrClair
-import com.example.ui.theme.OrParis
-import com.example.ui.theme.RougeFrance
-import com.example.ui.theme.TextSecondaire
-import com.example.ui.theme.VertSucces
+import com.example.ui.theme.FrenchRed
+import com.example.ui.theme.GoldDark
+import com.example.ui.theme.GoldLight
+import com.example.ui.theme.RoyalBlue
+import com.example.ui.theme.SuccessGreen
+import com.example.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,7 +78,6 @@ fun ExamScreen(
     val isGrading by viewModel.isGrading.collectAsState()
     val gradingResult by viewModel.latestGradingResult.collectAsState()
 
-    // Quiz states
     val currentQuizIndex by viewModel.currentQuizIndex.collectAsState()
     val selectedQuizOption by viewModel.quizSelectedOption.collectAsState()
     val quizScore by viewModel.quizScore.collectAsState()
@@ -93,7 +92,7 @@ fun ExamScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = if (selectedPrompt != null) selectedPrompt!!.title else "Examens & DELF",
+                        text = if (selectedPrompt != null) selectedPrompt!!.title else "Exams & DELF",
                         fontWeight = FontWeight.Bold,
                         fontSize = 17.sp,
                         maxLines = 1
@@ -102,7 +101,7 @@ fun ExamScreen(
                 navigationIcon = {
                     if (selectedPrompt != null) {
                         IconButton(onClick = { viewModel.exitEssay() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour aux sujets")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to topics")
                         }
                     }
                 },
@@ -116,26 +115,24 @@ fun ExamScreen(
                 .padding(paddingValues)
         ) {
             if (selectedPrompt == null) {
-                // Tab Row for Exam Modes
                 TabRow(
                     selectedTabIndex = selectedTab,
                     containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = BleuRoy
+                    contentColor = RoyalBlue
                 ) {
                     Tab(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
-                        text = { Text("Production Écrite (DELF)", fontWeight = FontWeight.SemiBold) }
+                        text = { Text("DELF Writing", fontWeight = FontWeight.SemiBold) }
                     )
                     Tab(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
-                        text = { Text("Sprint Grammaire", fontWeight = FontWeight.SemiBold) }
+                        text = { Text("Grammar Sprint", fontWeight = FontWeight.SemiBold) }
                     )
                 }
 
                 if (selectedTab == 0) {
-                    // DELF Essay Prompts List
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
@@ -144,9 +141,9 @@ fun ExamScreen(
                     ) {
                         item {
                             Text(
-                                text = "Préparez les épreuves de production écrite DELF/DALF avec évaluation automatique par IA selon les barèmes officiels.",
+                                text = "Prepare for DELF/DALF written production with AI feedback that follows the official marking scheme.",
                                 fontSize = 13.sp,
-                                color = TextSecondaire,
+                                color = TextSecondary,
                                 lineHeight = 18.sp
                             )
                         }
@@ -167,7 +164,7 @@ fun ExamScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        CefrLevelBadge(level = prompt.type)
+                                        CefrBadge(level = prompt.type)
                                         Surface(
                                             shape = RoundedCornerShape(6.dp),
                                             color = Color(0xFFF1F5F9)
@@ -176,7 +173,7 @@ fun ExamScreen(
                                                 text = prompt.targetWordCount,
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = TextSecondaire,
+                                                color = TextSecondary,
                                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                             )
                                         }
@@ -193,24 +190,23 @@ fun ExamScreen(
                                     Text(
                                         text = prompt.instructions,
                                         fontSize = 13.sp,
-                                        color = TextSecondaire,
+                                        color = TextSecondary,
                                         lineHeight = 18.sp
                                     )
                                     Spacer(modifier = Modifier.height(14.dp))
                                     Button(
                                         onClick = { viewModel.selectPrompt(prompt) },
-                                        colors = ButtonDefaults.buttonColors(containerColor = BleuRoy),
+                                        colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue),
                                         shape = RoundedCornerShape(10.dp),
                                         modifier = Modifier.align(Alignment.End)
                                     ) {
-                                        Text("Rédiger l'essai", fontSize = 12.sp)
+                                        Text("Write essay", fontSize = 12.sp)
                                     }
                                 }
                             }
                         }
                     }
                 } else {
-                    // Sprint Grammaire Mode
                     GrammarQuizView(
                         viewModel = viewModel,
                         currentQuizIndex = currentQuizIndex,
@@ -220,12 +216,10 @@ fun ExamScreen(
                     )
                 }
             } else {
-                // Active Essay Writing & Grading View
                 val prompt = selectedPrompt!!
                 val wordCount = essayText.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }.size
-                // Parse the prompt's own target (e.g. "60-80 mots" → 60) so the
-                // indicator turns green at the recommended length, not at a
-                // one-size-fits-all 30 words.
+                // Parse the prompt's own target (e.g. "60-80 words" -> 60) so the
+                // indicator turns green at the recommended length.
                 val targetWords = remember(prompt.id) {
                     Regex("\\d+").find(prompt.targetWordCount)?.value?.toIntOrNull() ?: 0
                 }
@@ -233,11 +227,10 @@ fun ExamScreen(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .imePadding() // keep the editor + submit button visible above the keyboard
+                        .imePadding()
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Prompt Instructions Card
                     item {
                         Card(
                             shape = RoundedCornerShape(14.dp),
@@ -250,12 +243,12 @@ fun ExamScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    CefrLevelBadge(level = prompt.type)
+                                    CefrBadge(level = prompt.type)
                                     Text(
-                                        text = "Objectif : ${prompt.targetWordCount}",
+                                        text = "Target: ${prompt.targetWordCount}",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = BleuRoy
+                                        color = RoyalBlue
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(6.dp))
@@ -269,7 +262,6 @@ fun ExamScreen(
                         }
                     }
 
-                    // Word Count Indicator
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -277,26 +269,25 @@ fun ExamScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Votre Rédaction en Français :",
+                                text = "Your writing in French:",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
                             )
                             Text(
-                                text = "$wordCount mots rédigés" +
-                                    if (targetWords > 0) " (cible : ~$targetWords)" else "",
+                                text = "$wordCount words" +
+                                    if (targetWords > 0) " (target ~$targetWords)" else "",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (targetWords > 0 && wordCount >= targetWords) VertSucces else TextSecondaire
+                                color = if (targetWords > 0 && wordCount >= targetWords) SuccessGreen else TextSecondary
                             )
                         }
                     }
 
-                    // Essay Editor
                     item {
                         OutlinedTextField(
                             value = essayText,
                             onValueChange = { viewModel.updateEssayText(it) },
-                            placeholder = { Text("Rédigez votre texte ici...") },
+                            placeholder = { Text("Write your text here…") },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(220.dp)
@@ -305,12 +296,11 @@ fun ExamScreen(
                         )
                     }
 
-                    // Submit for AI Grading
                     item {
                         Button(
                             onClick = { viewModel.submitEssayForGrading() },
                             enabled = essayText.isNotBlank() && !isGrading,
-                            colors = ButtonDefaults.buttonColors(containerColor = BleuRoy),
+                            colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -320,16 +310,15 @@ fun ExamScreen(
                             if (isGrading) {
                                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                                 Spacer(modifier = Modifier.width(10.dp))
-                                Text("Correction et notation DELF en cours...")
+                                Text("Marking against the DELF rubric…")
                             } else {
                                 Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Évaluer avec le barème DELF (/25)", fontWeight = FontWeight.Bold)
+                                Text("Grade with the DELF rubric (/25)", fontWeight = FontWeight.Bold)
                             }
                         }
                     }
 
-                    // AI Grading Result Rubric
                     if (gradingResult != null) {
                         val result = gradingResult!!
                         item {
@@ -349,27 +338,27 @@ fun ExamScreen(
                                     ) {
                                         Column {
                                             Text(
-                                                text = "Résultat Officieux DELF",
+                                                text = "Unofficial DELF result",
                                                 style = MaterialTheme.typography.titleMedium,
                                                 fontWeight = FontWeight.Bold
                                             )
                                             Text(
-                                                text = "Appréciation : ${result.cefrAssessment}",
+                                                text = "Assessment: ${result.cefrAssessment}",
                                                 fontSize = 12.sp,
-                                                color = BleuRoy,
+                                                color = RoyalBlue,
                                                 fontWeight = FontWeight.SemiBold
                                             )
                                         }
 
                                         Surface(
                                             shape = RoundedCornerShape(12.dp),
-                                            color = if (result.score >= 15) VertSucces.copy(alpha = 0.15f) else OrParis.copy(alpha = 0.15f)
+                                            color = if (result.score >= 15) SuccessGreen.copy(alpha = 0.15f) else GoldDark.copy(alpha = 0.15f)
                                         ) {
                                             Text(
                                                 text = "${result.score} / ${result.maxScore}",
                                                 fontSize = 18.sp,
                                                 fontWeight = FontWeight.ExtraBold,
-                                                color = if (result.score >= 15) VertSucces else OrAccent,
+                                                color = if (result.score >= 15) SuccessGreen else GoldDark,
                                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                             )
                                         }
@@ -377,17 +366,15 @@ fun ExamScreen(
 
                                     Spacer(modifier = Modifier.height(14.dp))
 
-                                    // Rubric Breakdown
-                                    RubricScoreBar(label = "Grammaire & Syntaxe", score = result.grammarScore, max = 7)
-                                    RubricScoreBar(label = "Richesse du Vocabulaire", score = result.vocabularyScore, max = 6)
-                                    RubricScoreBar(label = "Cohérence & Connecteurs", score = result.coherenceScore, max = 6)
-                                    RubricScoreBar(label = "Respect de la Consigne", score = result.taskFulfillmentScore, max = 6)
+                                    RubricScoreBar(label = "Grammar & syntax", score = result.grammarScore, max = 7)
+                                    RubricScoreBar(label = "Vocabulary range", score = result.vocabularyScore, max = 6)
+                                    RubricScoreBar(label = "Coherence & connectors", score = result.coherenceScore, max = 6)
+                                    RubricScoreBar(label = "Task completion", score = result.taskFulfillmentScore, max = 6)
 
                                     Spacer(modifier = Modifier.height(14.dp))
 
-                                    // Detailed Comments
                                     Text(
-                                        text = "Commentaire du Correcteur :",
+                                        text = "Examiner comments:",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp
                                     )
@@ -395,18 +382,17 @@ fun ExamScreen(
                                     Text(
                                         text = result.detailedFeedback,
                                         fontSize = 13.sp,
-                                        color = TextSecondaire,
+                                        color = TextSecondary,
                                         lineHeight = 18.sp
                                     )
 
-                                    // Suggested Corrections
                                     if (result.suggestedCorrections.isNotEmpty()) {
                                         Spacer(modifier = Modifier.height(14.dp))
                                         Text(
-                                            text = "Points de correction clés :",
+                                            text = "Key corrections:",
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 13.sp,
-                                            color = RougeFrance
+                                            color = FrenchRed
                                         )
                                         Spacer(modifier = Modifier.height(6.dp))
                                         result.suggestedCorrections.forEach { correction ->
@@ -445,8 +431,8 @@ fun RubricScoreBar(label: String, score: Int, max: Int) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = label, fontSize = 12.sp, color = TextSecondaire)
-            Text(text = "$score / $max", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BleuRoy)
+            Text(text = label, fontSize = 12.sp, color = TextSecondary)
+            Text(text = "$score / $max", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = RoyalBlue)
         }
         Spacer(modifier = Modifier.height(3.dp))
         LinearProgressIndicator(
@@ -455,7 +441,7 @@ fun RubricScoreBar(label: String, score: Int, max: Int) {
                 .fillMaxWidth()
                 .height(6.dp)
                 .clip(RoundedCornerShape(3.dp)),
-            color = BleuRoy,
+            color = RoyalBlue,
             trackColor = Color(0xFFE2E8F0)
         )
     }
@@ -482,32 +468,32 @@ fun GrammarQuizView(
                 Icon(
                     imageVector = Icons.Default.AssignmentTurnedIn,
                     contentDescription = null,
-                    tint = VertSucces,
+                    tint = SuccessGreen,
                     modifier = Modifier.size(64.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Quiz Terminé !",
+                    text = "Quiz complete!",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Votre score : $quizScore / ${questions.size} bonnes réponses",
+                    text = "Your score: $quizScore / ${questions.size} correct",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = BleuRoy
+                    color = RoyalBlue
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
                     onClick = { viewModel.restartQuiz() },
-                    colors = ButtonDefaults.buttonColors(containerColor = BleuRoy),
+                    colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.testTag("restart_quiz_btn")
                 ) {
                     Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Recommencer le quiz")
+                    Text("Restart quiz")
                 }
             }
         }
@@ -526,16 +512,16 @@ fun GrammarQuizView(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Question ${currentQuizIndex + 1} sur ${questions.size}",
+                        text = "Question ${currentQuizIndex + 1} of ${questions.size}",
                         fontSize = 12.sp,
-                        color = TextSecondaire,
+                        color = TextSecondary,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "Score : $quizScore",
+                        text = "Score: $quizScore",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = BleuRoy
+                        color = RoyalBlue
                     )
                 }
                 Spacer(modifier = Modifier.height(6.dp))
@@ -545,7 +531,7 @@ fun GrammarQuizView(
                         .fillMaxWidth()
                         .height(6.dp)
                         .clip(RoundedCornerShape(3.dp)),
-                    color = BleuRoy,
+                    color = RoyalBlue,
                     trackColor = Color(0xFFDBEAFE)
                 )
 
@@ -567,14 +553,13 @@ fun GrammarQuizView(
                         text = q.contextSentence,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = BleuRoy,
+                        color = RoyalBlue,
                         modifier = Modifier.padding(14.dp)
                     )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Options list
                 q.options.forEachIndexed { index, option ->
                     val isSelected = selectedOption == index
                     val isCorrect = index == q.correctIndex
@@ -596,9 +581,9 @@ fun GrammarQuizView(
                             .testTag("quiz_opt_$index"),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = containerColor),
-                        border = androidx.compose.foundation.BorderStroke(
+                        border = BorderStroke(
                             1.dp,
-                            if (isSelected) BleuRoy else Color(0xFFE2E8F0)
+                            if (isSelected) RoyalBlue else Color(0xFFE2E8F0)
                         )
                     ) {
                         Row(
@@ -611,25 +596,24 @@ fun GrammarQuizView(
                             Text(text = option, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                             if (selectedOption != null) {
                                 if (isCorrect) {
-                                    Icon(Icons.Default.Check, contentDescription = null, tint = VertSucces)
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = SuccessGreen)
                                 } else if (isSelected) {
-                                    Icon(Icons.Default.Close, contentDescription = null, tint = RougeFrance)
+                                    Icon(Icons.Default.Close, contentDescription = null, tint = FrenchRed)
                                 }
                             }
                         }
                     }
                 }
 
-                // Explanation
                 if (selectedOption != null) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Surface(
                         shape = RoundedCornerShape(10.dp),
-                        color = OrClair,
+                        color = GoldLight,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "Explication : ${q.explanation}",
+                            text = "Explanation: ${q.explanation}",
                             fontSize = 12.sp,
                             color = Color(0xFF78350F),
                             modifier = Modifier.padding(10.dp)
@@ -641,7 +625,7 @@ fun GrammarQuizView(
             if (selectedOption != null) {
                 Button(
                     onClick = { viewModel.nextQuizQuestion() },
-                    colors = ButtonDefaults.buttonColors(containerColor = BleuRoy),
+                    colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -649,7 +633,7 @@ fun GrammarQuizView(
                         .testTag("next_quiz_q_btn")
                 ) {
                     Text(
-                        text = if (currentQuizIndex + 1 < questions.size) "Question suivante" else "Voir les résultats",
+                        text = if (currentQuizIndex + 1 < questions.size) "Next question" else "See results",
                         fontWeight = FontWeight.Bold
                     )
                 }

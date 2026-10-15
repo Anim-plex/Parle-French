@@ -12,7 +12,7 @@ data class FlashcardEntity(
     val pronunciation: String,
     val exampleSentence: String,
     val exampleTranslation: String,
-    val category: String, // e.g. "Core 500", "Travel", "Dining", "DELF B1", "Visual"
+    val category: String, // e.g. "Core 500", "Travel", "Dining", "DELF Connectors", "Visual"
     val repetitionCount: Int = 0,
     val intervalDays: Int = 1,
     val easeFactor: Double = 2.5,
@@ -23,7 +23,7 @@ data class FlashcardEntity(
 @Entity(tableName = "user_stats")
 data class UserStatsEntity(
     @PrimaryKey val userId: String = "local_user",
-    val displayName: String = "Apprenant Français",
+    val displayName: String = "French Learner",
     val targetLevel: String = "B1",
     val streakDays: Int = 1,
     val lastActiveDate: String = "",

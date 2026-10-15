@@ -94,7 +94,7 @@ class AuthViewModel(
                     auth.signInWithCredential(authCredential).await()
                 }
             } catch (e: Exception) {
-                // Auto sign-in failed silently, keep user in guest / unauthenticated state
+                // Silent auto sign-in failed — the user simply stays in guest mode.
                 Log.d(TAG, "Silent auto sign-in skipped: ${e.message}")
             }
         }
@@ -104,7 +104,7 @@ class AuthViewModel(
         val clientId = try {
             context.getString(R.string.default_web_client_id)
         } catch (e: Exception) {
-            _errorMessage.value = "Google Sign-In configuration missing (default_web_client_id)"
+            _errorMessage.value = "Google Sign-In is not configured (missing default_web_client_id)."
             return
         }
 
@@ -127,14 +127,14 @@ class AuthViewModel(
                     auth.signInWithCredential(authCredential).await()
                     repository.performFullCloudSync()
                 } else {
-                    _errorMessage.value = "Format d'authentification inattendu."
+                    _errorMessage.value = "Unexpected authentication response."
                 }
             } catch (e: GetCredentialCancellationException) {
                 Log.w(TAG, "Google Sign-In flow cancelled: ${e.message}", e)
-                // Reset loading state cleanly on cancellation
+                // Reset loading state cleanly on cancellation.
             } catch (e: Exception) {
                 Log.e(TAG, "Google Sign-In failed", e)
-                _errorMessage.value = e.localizedMessage ?: "Échec de connexion Google"
+                _errorMessage.value = e.localizedMessage ?: "Google Sign-In failed."
             } finally {
                 _isLoading.value = false
             }

@@ -1,6 +1,5 @@
 package com.example.ui.screens
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.speech.RecognitionListener
@@ -9,6 +8,7 @@ import android.speech.SpeechRecognizer
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,8 +34,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.Person
@@ -66,26 +64,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.FrenchTtsManager
-import com.example.ui.components.CefrLevelBadge
-import com.example.ui.components.FrenchAudioButton
+import com.example.ui.components.CefrBadge
+import com.example.ui.components.PronounceButton
 import com.example.ui.roleplay.ChatMessage
 import com.example.ui.roleplay.RoleplayScenario
 import com.example.ui.roleplay.RoleplayViewModel
-import com.example.ui.theme.BleuRoy
-import com.example.ui.theme.OrAccent
-import com.example.ui.theme.OrClair
-import com.example.ui.theme.RougeFrance
-import com.example.ui.theme.TextSecondaire
-import com.example.ui.theme.VertSucces
-import java.util.Locale
+import com.example.ui.theme.FrenchRed
+import com.example.ui.theme.GoldDark
+import com.example.ui.theme.GoldLight
+import com.example.ui.theme.RoyalBlue
+import com.example.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,9 +109,7 @@ fun RoleplayScreen(
     }
 
     DisposableEffect(Unit) {
-        onDispose {
-            speechRecognizer?.destroy()
-        }
+        onDispose { speechRecognizer?.destroy() }
     }
 
     BackHandler {
@@ -127,7 +121,6 @@ fun RoleplayScreen(
     }
 
     if (selectedScenario == null) {
-        // Scenario Selection List
         ScenarioPickerView(
             scenarios = viewModel.scenarios,
             onSelectScenario = { viewModel.selectScenario(it) },
@@ -150,15 +143,15 @@ fun RoleplayScreen(
                     title = {
                         Column {
                             Text(
-                                text = scenario.frenchTitle,
+                                text = scenario.title,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1
                             )
                             Text(
-                                text = "Partenaire : ${scenario.aiRole}",
+                                text = "Partner: ${scenario.aiRole}",
                                 fontSize = 11.sp,
-                                color = TextSecondaire
+                                color = TextSecondary
                             )
                         }
                     },
@@ -167,19 +160,19 @@ fun RoleplayScreen(
                             onClick = { viewModel.exitScenario() },
                             modifier = Modifier.testTag("exit_scenario_btn")
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quitter le scénario")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Exit scenario")
                         }
                     },
                     actions = {
-                        CefrLevelBadge(level = scenario.level)
+                        CefrBadge(level = scenario.level)
                         IconButton(
                             onClick = { showTranslations = !showTranslations },
                             modifier = Modifier.testTag("toggle_translation_btn")
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Translate,
-                                contentDescription = "Traductions",
-                                tint = if (showTranslations) BleuRoy else TextSecondaire
+                                contentDescription = "Toggle translations",
+                                tint = if (showTranslations) RoyalBlue else TextSecondary
                             )
                         }
                     },
@@ -191,16 +184,15 @@ fun RoleplayScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.surface)
-                        .imePadding() // keep the input row above the soft keyboard
+                        .imePadding()
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    // Suggested replies scaffolding
                     if (suggestedReplies.isNotEmpty()) {
                         Text(
-                            text = "Suggestions de réponse :",
+                            text = "Suggested replies:",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = TextSecondaire,
+                            color = TextSecondary,
                             modifier = Modifier.padding(bottom = 4.dp, start = 4.dp)
                         )
                         LazyRow(
@@ -211,17 +203,15 @@ fun RoleplayScreen(
                                 Surface(
                                     shape = RoundedCornerShape(16.dp),
                                     color = Color(0xFFEFF6FF),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBFDBFE)),
+                                    border = BorderStroke(1.dp, Color(0xFFBFDBFE)),
                                     modifier = Modifier
-                                        .clickable {
-                                            inputText = suggestion
-                                        }
+                                        .clickable { inputText = suggestion }
                                         .testTag("suggestion_chip_${suggestion.take(8)}")
                                 ) {
                                     Text(
                                         text = suggestion,
                                         fontSize = 12.sp,
-                                        color = BleuRoy,
+                                        color = RoyalBlue,
                                         fontWeight = FontWeight.Medium,
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                     )
@@ -230,64 +220,61 @@ fun RoleplayScreen(
                         }
                     }
 
-                    // Input Row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Microphone voice button
                         IconButton(
                             onClick = {
                                 if (speechRecognizer == null) {
-                                    // Previously a silent no-op — tell the user why.
                                     Toast.makeText(
                                         context,
-                                        "La reconnaissance vocale n'est pas disponible sur cet appareil.",
+                                        "Speech recognition isn't available on this device.",
                                         Toast.LENGTH_SHORT
                                     ).show()
                                     return@IconButton
                                 }
                                 if (isListening) {
-                                        speechRecognizer.stopListening()
-                                        isListening = false
-                                    } else {
-                                        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                                            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fr-FR")
-                                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "fr-FR")
-                                            putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, "fr-FR")
-                                        }
-                                        speechRecognizer.setRecognitionListener(object : RecognitionListener {
-                                            override fun onReadyForSpeech(params: Bundle?) { isListening = true }
-                                            override fun onBeginningOfSpeech() {}
-                                            override fun onRmsChanged(rmsdB: Float) {}
-                                            override fun onBufferReceived(buffer: ByteArray?) {}
-                                            override fun onEndOfSpeech() { isListening = false }
-                                            override fun onError(error: Int) { isListening = false }
-                                            override fun onResults(results: Bundle?) {
-                                                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                                                if (!matches.isNullOrEmpty()) {
-                                                    inputText = matches[0]
-                                                }
-                                                isListening = false
-                                            }
-                                            override fun onPartialResults(partialResults: Bundle?) {}
-                                            override fun onEvent(eventType: Int, params: Bundle?) {}
-                                        })
-                                        speechRecognizer.startListening(intent)
+                                    speechRecognizer.stopListening()
+                                    isListening = false
+                                } else {
+                                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                        putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fr-FR")
+                                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "fr-FR")
+                                        putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, "fr-FR")
                                     }
+                                    speechRecognizer.setRecognitionListener(object : RecognitionListener {
+                                        override fun onReadyForSpeech(params: Bundle?) { isListening = true }
+                                        override fun onBeginningOfSpeech() {}
+                                        override fun onRmsChanged(rmsdB: Float) {}
+                                        override fun onBufferReceived(buffer: ByteArray?) {}
+                                        override fun onEndOfSpeech() { isListening = false }
+                                        override fun onError(error: Int) { isListening = false }
+                                        override fun onResults(results: Bundle?) {
+                                            val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                                            if (!matches.isNullOrEmpty()) {
+                                                inputText = matches[0]
+                                            }
+                                            isListening = false
+                                        }
+                                        override fun onPartialResults(partialResults: Bundle?) {}
+                                        override fun onEvent(eventType: Int, params: Bundle?) {}
+                                    })
+                                    speechRecognizer.startListening(intent)
+                                }
                             },
                             modifier = Modifier
                                 .testTag("mic_button")
                                 .background(
-                                    color = if (isListening) RougeFrance.copy(alpha = 0.15f) else Color(0xFFF1F5F9),
+                                    color = if (isListening) FrenchRed.copy(alpha = 0.15f) else Color(0xFFF1F5F9),
                                     shape = CircleShape
                                 )
                         ) {
                             Icon(
                                 imageVector = if (isListening) Icons.Default.Mic else Icons.Default.MicOff,
-                                contentDescription = "Parler en français",
-                                tint = if (isListening) RougeFrance else TextSecondaire
+                                contentDescription = "Speak in French",
+                                tint = if (isListening) FrenchRed else TextSecondary
                             )
                         }
 
@@ -296,7 +283,7 @@ fun RoleplayScreen(
                         OutlinedTextField(
                             value = inputText,
                             onValueChange = { inputText = it },
-                            placeholder = { Text("Répondez en français...", fontSize = 13.sp) },
+                            placeholder = { Text("Type in French…", fontSize = 13.sp) },
                             modifier = Modifier
                                 .weight(1f)
                                 .testTag("message_input"),
@@ -318,7 +305,7 @@ fun RoleplayScreen(
                             modifier = Modifier
                                 .testTag("send_message_btn")
                                 .background(
-                                    color = if (inputText.isNotBlank() && !isLoading) BleuRoy else Color(0xFFE2E8F0),
+                                    color = if (inputText.isNotBlank() && !isLoading) RoyalBlue else Color(0xFFE2E8F0),
                                     shape = CircleShape
                                 )
                         ) {
@@ -331,7 +318,7 @@ fun RoleplayScreen(
                             } else {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.Send,
-                                    contentDescription = "Envoyer",
+                                    contentDescription = "Send",
                                     tint = Color.White,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -346,14 +333,13 @@ fun RoleplayScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // Collapsible Live Grammar & Pronunciation Feedback Banner
                 AnimatedVisibility(visible = !latestFeedback.isNullOrBlank()) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                             .testTag("live_feedback_card"),
-                        colors = CardDefaults.cardColors(containerColor = OrClair),
+                        colors = CardDefaults.cardColors(containerColor = GoldLight),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(
@@ -363,16 +349,16 @@ fun RoleplayScreen(
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
                                 contentDescription = null,
-                                tint = OrAccent,
+                                tint = GoldDark,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
                                 Text(
-                                    text = "Retour Pédagogique & Grammaire :",
+                                    text = "Tutor feedback & grammar:",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = OrAccent
+                                    color = GoldDark
                                 )
                                 Text(
                                     text = latestFeedback ?: "",
@@ -384,7 +370,6 @@ fun RoleplayScreen(
                     }
                 }
 
-                // Chat Messages List
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
@@ -408,9 +393,9 @@ fun RoleplayScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(8.dp)
                             ) {
-                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = BleuRoy)
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = RoyalBlue)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Votre interlocuteur formule sa réponse...", fontSize = 12.sp, color = TextSecondaire)
+                                Text("Your partner is typing…", fontSize = 12.sp, color = TextSecondary)
                             }
                         }
                     }
@@ -437,7 +422,7 @@ fun ChatBubbleItem(
         if (!isUser) {
             Surface(
                 shape = CircleShape,
-                color = BleuRoy.copy(alpha = 0.12f),
+                color = RoyalBlue.copy(alpha = 0.12f),
                 modifier = Modifier
                     .size(34.dp)
                     .align(Alignment.Bottom)
@@ -446,7 +431,7 @@ fun ChatBubbleItem(
                     Icon(
                         imageVector = Icons.Default.SmartToy,
                         contentDescription = null,
-                        tint = BleuRoy,
+                        tint = RoyalBlue,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -461,8 +446,8 @@ fun ChatBubbleItem(
                 bottomStart = if (isUser) 16.dp else 4.dp,
                 bottomEnd = if (isUser) 4.dp else 16.dp
             ),
-            color = if (isUser) BleuRoy else MaterialTheme.colorScheme.surface,
-            tonalElevation = SurfaceElevation(isUser),
+            color = if (isUser) RoyalBlue else MaterialTheme.colorScheme.surface,
+            tonalElevation = if (isUser) 1.dp else 2.dp,
             modifier = Modifier
                 .widthIn(max = 290.dp)
                 .testTag("chat_bubble_${if (isUser) "user" else "partner"}")
@@ -474,15 +459,15 @@ fun ChatBubbleItem(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (isUser) "Vous" else "Partenaire",
+                        text = if (isUser) "You" else "Partner",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isUser) Color(0xFFBFDBFE) else BleuRoy
+                        color = if (isUser) Color(0xFFBFDBFE) else RoyalBlue
                     )
-                    FrenchAudioButton(
+                    PronounceButton(
                         textToSpeak = message.textFrench,
                         ttsManager = ttsManager,
-                        tint = if (isUser) Color.White else BleuRoy,
+                        tint = if (isUser) Color.White else RoyalBlue,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -501,8 +486,8 @@ fun ChatBubbleItem(
                     Text(
                         text = message.textEnglish,
                         fontSize = 12.sp,
-                        color = if (isUser) Color(0xFFE2E8F0) else TextSecondaire,
-                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                        color = if (isUser) Color(0xFFE2E8F0) else TextSecondary,
+                        fontStyle = FontStyle.Italic
                     )
                 }
             }
@@ -512,7 +497,7 @@ fun ChatBubbleItem(
             Spacer(modifier = Modifier.width(8.dp))
             Surface(
                 shape = CircleShape,
-                color = BleuRoy,
+                color = RoyalBlue,
                 modifier = Modifier
                     .size(34.dp)
                     .align(Alignment.Bottom)
@@ -538,8 +523,8 @@ fun ScenarioPickerView(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedLevelFilter by remember { mutableStateOf("Tous") }
-    val filteredScenarios = if (selectedLevelFilter == "Tous") {
+    var selectedLevelFilter by remember { mutableStateOf("All") }
+    val filteredScenarios = if (selectedLevelFilter == "All") {
         scenarios
     } else {
         scenarios.filter { it.level.contains(selectedLevelFilter) }
@@ -548,12 +533,10 @@ fun ScenarioPickerView(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text("Jeux de Rôle & Situations", fontWeight = FontWeight.Bold)
-                },
+                title = { Text("Roleplay & Situations", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -567,26 +550,25 @@ fun ScenarioPickerView(
                 .padding(horizontal = 16.dp)
         ) {
             Text(
-                text = "Développez votre aisance orale dans des situations authentiques du quotidien et professionnelles.",
+                text = "Build speaking confidence in everyday and professional situations.",
                 fontSize = 13.sp,
-                color = TextSecondaire,
+                color = TextSecondary,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
 
-            // Filter chips
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(bottom = 12.dp)
             ) {
-                listOf("Tous", "A1", "A2", "B1", "B2").forEach { level ->
+                listOf("All", "A1", "A2", "B1", "B2").forEach { level ->
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = if (selectedLevelFilter == level) BleuRoy else Color(0xFFF1F5F9),
+                        color = if (selectedLevelFilter == level) RoyalBlue else Color(0xFFF1F5F9),
                         modifier = Modifier.clickable { selectedLevelFilter = level }
                     ) {
                         Text(
                             text = level,
-                            color = if (selectedLevelFilter == level) Color.White else TextSecondaire,
+                            color = if (selectedLevelFilter == level) Color.White else TextSecondary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
@@ -615,32 +597,32 @@ fun ScenarioPickerView(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                CefrLevelBadge(level = scenario.level)
+                                CefrBadge(level = scenario.level)
                                 Text(
                                     text = scenario.category,
                                     fontSize = 12.sp,
-                                    color = TextSecondaire,
+                                    color = TextSecondary,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = scenario.frenchTitle,
+                                text = scenario.title,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = scenario.title,
+                                text = scenario.frenchTitle,
                                 fontSize = 12.sp,
-                                color = BleuRoy,
+                                color = RoyalBlue,
                                 fontWeight = FontWeight.Medium
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = scenario.description,
                                 fontSize = 13.sp,
-                                color = TextSecondaire,
+                                color = TextSecondary,
                                 lineHeight = 18.sp
                             )
                             Spacer(modifier = Modifier.height(12.dp))
@@ -650,17 +632,17 @@ fun ScenarioPickerView(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Rôle IA : ${scenario.aiRole}",
+                                    text = "Your role: ${scenario.userRole}",
                                     fontSize = 11.sp,
-                                    color = TextSecondaire,
+                                    color = TextSecondary,
                                     maxLines = 1
                                 )
                                 Button(
                                     onClick = { onSelectScenario(scenario) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = BleuRoy),
+                                    colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue),
                                     shape = RoundedCornerShape(10.dp)
                                 ) {
-                                    Text("Démarrer", fontSize = 12.sp)
+                                    Text("Start", fontSize = 12.sp)
                                 }
                             }
                         }
@@ -670,6 +652,3 @@ fun ScenarioPickerView(
         }
     }
 }
-
-private fun SurfaceElevation(isUser: Boolean) =
-    if (isUser) 1.dp else 2.dp

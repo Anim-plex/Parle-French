@@ -10,6 +10,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * [title] / [description] / [aiRole] / [userRole] are the English interface text,
+ * while [frenchTitle] and [initialMessage] carry the French the learner is here
+ * to practise.
+ */
 data class RoleplayScenario(
     val id: String,
     val title: String,
@@ -43,24 +48,24 @@ class RoleplayViewModel(
             title = "Ordering at a Parisian Café",
             frenchTitle = "Commander au Café Parisien",
             level = "A1-A2",
-            category = "Dining & Daily",
-            description = "Order coffee, pastries, ask about menu specialties, and request the check like a local.",
-            aiRole = "Serveur parisien sympathique",
-            userRole = "Client au café",
+            category = "Food & Daily life",
+            description = "Order coffee and pastries, ask about the specials, and request the bill like a local.",
+            aiRole = "Friendly Parisian waiter",
+            userRole = "Customer at the café",
             initialMessage = "Bonjour ! Bienvenue à la terrasse. Qu'est-ce qui vous ferait plaisir aujourd'hui ?",
-            initialMessageEnglish = "Hello! Welcome to the terrace. What would you like to have today?"
+            initialMessageEnglish = "Hello! Welcome to the terrace. What would you like today?"
         ),
         RoleplayScenario(
             id = "sc_train",
-            title = "Train Station & Metro Navigation",
+            title = "Train Station & Metro",
             frenchTitle = "À la Gare et au Métro",
             level = "A2",
             category = "Travel",
-            description = "Ask for TGV tickets to Lyon, inquire about platform departures, delays, and transfers.",
-            aiRole = "Agent de guichet SNCF",
-            userRole = "Voyageur",
-            initialMessage = "Bonjour madame/monsieur, bienvenue à la SNCF. Pour quelle destination voyagez-vous aujourd'hui ?",
-            initialMessageEnglish = "Hello, welcome to SNCF. Which destination are you traveling to today?"
+            description = "Buy a TGV ticket to Lyon and ask about platforms, delays and connections.",
+            aiRole = "SNCF ticket agent",
+            userRole = "Traveller",
+            initialMessage = "Bonjour, bienvenue à la SNCF. Pour quelle destination voyagez-vous aujourd'hui ?",
+            initialMessageEnglish = "Hello, welcome to SNCF. Which destination are you travelling to today?"
         ),
         RoleplayScenario(
             id = "sc_interview",
@@ -68,23 +73,23 @@ class RoleplayViewModel(
             frenchTitle = "L'Entretien d'Embauche",
             level = "B1-B2",
             category = "Professional",
-            description = "Pitch your background, describe strengths and career goals in professional French.",
-            aiRole = "Responsable RH",
-            userRole = "Candidat(e)",
+            description = "Pitch your background and describe your strengths and career goals in professional French.",
+            aiRole = "HR manager",
+            userRole = "Job candidate",
             initialMessage = "Bonjour et merci de vous être déplacé(e). Pourriez-vous commencer par vous présenter brièvement ?",
-            initialMessageEnglish = "Hello and thank you for coming. Could you begin by introducing yourself briefly?"
+            initialMessageEnglish = "Hello and thank you for coming. Could you start by introducing yourself briefly?"
         ),
         RoleplayScenario(
             id = "sc_friend",
-            title = "Casual Meetup in Montmartre",
+            title = "Catching up in Montmartre",
             frenchTitle = "Rencontre Amicale à Montmartre",
             level = "B1",
             category = "Conversational",
-            description = "Catch up with Julien, talk about weekend plans, hobbies, and authentic colloquial slang.",
-            aiRole = "Julien, ami parisien",
-            userRole = "Ami(e) en visite",
+            description = "Chat with Julien about weekend plans and hobbies, and pick up natural colloquial French.",
+            aiRole = "Julien, a Parisian friend",
+            userRole = "A friend visiting",
             initialMessage = "Salut ! Ça fait un bail, super de te voir ! Comment tu vas depuis la dernière fois ?",
-            initialMessageEnglish = "Hi! It's been a while, great to see you! How have you been since last time?"
+            initialMessageEnglish = "Hi! It's been ages, great to see you! How have you been since last time?"
         ),
         RoleplayScenario(
             id = "sc_pharmacy",
@@ -92,23 +97,23 @@ class RoleplayViewModel(
             frenchTitle = "Conseils à la Pharmacie",
             level = "A2-B1",
             category = "Health & Travel",
-            description = "Explain symptoms (sore throat, fatigue), understand dosage instructions and remedies.",
-            aiRole = "Pharmacien conseil",
-            userRole = "Client(e)",
+            description = "Describe symptoms such as a sore throat or fatigue and understand dosage instructions.",
+            aiRole = "Advising pharmacist",
+            userRole = "Customer",
             initialMessage = "Bonjour. Je vous écoute, comment puis-je vous aider aujourd'hui ?",
-            initialMessageEnglish = "Hello. How may I help you today?"
+            initialMessageEnglish = "Hello. I'm listening — how can I help you today?"
         ),
         RoleplayScenario(
             id = "sc_debate",
-            title = "Societal Debate: Remote Work & Climate",
+            title = "Debate: Remote Work & Climate",
             frenchTitle = "Débat : Télétravail et Écologie",
             level = "B2-C1",
             category = "DELF/DALF Prep",
-            description = "Articulate complex opinions with logical connectors (néanmoins, quant à, force est de constater).",
-            aiRole = "Modérateur et sociologue",
-            userRole = "Débatteur",
+            description = "Build a complex argument with connectors such as néanmoins, quant à and force est de constater.",
+            aiRole = "Moderator and sociologist",
+            userRole = "Debater",
             initialMessage = "Bonjour. Selon vous, le télétravail représente-t-il une vraie réponse écologique aux transports urbains ?",
-            initialMessageEnglish = "Hello. In your view, does remote work represent a real ecological response to urban transit?"
+            initialMessageEnglish = "Hello. In your view, does remote work represent a real ecological answer to urban transport?"
         )
     )
 
@@ -134,15 +139,27 @@ class RoleplayViewModel(
             sender = "partner",
             textFrench = scenario.initialMessage,
             textEnglish = scenario.initialMessageEnglish,
-            feedback = "Débutez votre conversation en saluant et en répondant poliment !"
+            feedback = "Say hello and reply politely to get the conversation started!"
         )
         _messages.value = listOf(initialChat)
         _latestFeedback.value = initialChat.feedback
         _suggestedReplies.value = when (scenario.id) {
-            "sc_cafe" -> listOf("Bonjour ! Je voudrais un café au lait et un croissant, s'il vous plaît.", "Bonjour, qu'est-ce que vous recommandez aujourd'hui ?")
-            "sc_train" -> listOf("Bonjour, je voudrais un aller-retour pour Lyon en TGV.", "Bonjour, à quelle heure part le prochain train pour Lyon ?")
-            "sc_interview" -> listOf("Bonjour, enchanté(e). J'ai cinq ans d'expérience dans le domaine du numérique.", "Bonjour, merci pour votre accueil. Je suis passionné(e) par ce secteur.")
-            else -> listOf("Bonjour ! Très content(e) de discuter avec vous.", "Bonjour, merci beaucoup.")
+            "sc_cafe" -> listOf(
+                "Bonjour ! Je voudrais un café au lait et un croissant, s'il vous plaît.",
+                "Bonjour, qu'est-ce que vous recommandez aujourd'hui ?"
+            )
+            "sc_train" -> listOf(
+                "Bonjour, je voudrais un aller-retour pour Lyon en TGV.",
+                "Bonjour, à quelle heure part le prochain train pour Lyon ?"
+            )
+            "sc_interview" -> listOf(
+                "Bonjour, enchanté(e). J'ai cinq ans d'expérience dans le numérique.",
+                "Bonjour, merci pour votre accueil. Ce secteur me passionne."
+            )
+            else -> listOf(
+                "Bonjour ! Très content(e) de discuter avec vous.",
+                "Bonjour, merci beaucoup."
+            )
         }
     }
 
@@ -189,9 +206,9 @@ class RoleplayViewModel(
                 _latestFeedback.value = result.grammarFeedback
                 _suggestedReplies.value = result.suggestedReplies
 
-                // Record progress
+                // Record progress once the conversation is underway.
                 if (_messages.value.size >= 6) {
-                    repository.recordRoleplayCompleted(scenario.frenchTitle, 90)
+                    repository.recordRoleplayCompleted(scenario.title, 90)
                 }
             } catch (e: Exception) {
                 val fallbackMsg = ChatMessage(
@@ -199,7 +216,7 @@ class RoleplayViewModel(
                     sender = "partner",
                     textFrench = "D'accord, je vous écoute ! Que voulez-vous ajouter ?",
                     textEnglish = "Alright, I'm listening! What would you like to add?",
-                    feedback = "Mode hors-ligne ou connexion réseau lente. Vous pouvez continuer à vous entraîner."
+                    feedback = "You appear to be offline or the connection is slow. You can keep practising and try again."
                 )
                 _messages.value = _messages.value + fallbackMsg
             } finally {

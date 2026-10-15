@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -56,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -63,16 +65,19 @@ import androidx.compose.ui.unit.sp
 import com.example.data.local.FlashcardEntity
 import com.example.domain.FrenchTtsManager
 import com.example.domain.ReviewRating
-import com.example.ui.components.FrenchAudioButton
 import com.example.ui.components.GenderBadge
+import com.example.ui.components.PronounceButton
 import com.example.ui.flashcards.FlashcardViewModel
-import com.example.ui.theme.BleuRoy
-import com.example.ui.theme.OrAccent
-import com.example.ui.theme.OrClair
-import com.example.ui.theme.OrParis
-import com.example.ui.theme.RougeFrance
-import com.example.ui.theme.TextSecondaire
-import com.example.ui.theme.VertSucces
+import com.example.ui.theme.GoldDark
+import com.example.ui.theme.GoldLight
+import com.example.ui.theme.RoyalBlue
+import com.example.ui.theme.SuccessGreen
+import com.example.ui.theme.TextSecondary
+
+private val REVIEW_CATEGORIES = listOf(
+    "All", "Core 500", "Dining", "Travel",
+    "DELF Connectors", "Professional", "Daily", "Visual", "Custom"
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,28 +96,26 @@ fun FlashcardsScreen(
     val activeCards = viewModel.getActiveReviewCards()
     var showAddDialog by remember { mutableStateOf(false) }
 
-    // Pin the review session as soon as the card lists are available, so the
+    // Pin the review session as soon as the card lists are available so the
     // progress counter and rating buttons keep pointing at the same cards
     // while the live due-list shrinks with each answer.
     LaunchedEffect(allCards.size, dueCards.size, selectedCategory) {
         viewModel.ensureSessionSnapshot()
     }
 
-    val categories = listOf("All", "Core 500", "Dining", "Travel", "DELF Connectors", "Visual Context", "Custom")
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Répétition Espacée (SRS)", fontWeight = FontWeight.Bold) },
+                title = { Text("Spaced Repetition", fontWeight = FontWeight.Bold) },
                 actions = {
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = OrClair,
+                        color = GoldLight,
                         modifier = Modifier.padding(end = 12.dp)
                     ) {
                         Text(
-                            text = "${activeCards.size} cartes",
-                            color = OrAccent,
+                            text = "${activeCards.size} cards",
+                            color = GoldDark,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -125,11 +128,11 @@ fun FlashcardsScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                containerColor = BleuRoy,
+                containerColor = RoyalBlue,
                 contentColor = Color.White,
                 modifier = Modifier.testTag("add_flashcard_fab")
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Ajouter un mot")
+                Icon(Icons.Default.Add, contentDescription = "Add a word")
             }
         }
     ) { paddingValues ->
@@ -139,23 +142,22 @@ fun FlashcardsScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
-            // Category Selector Chips
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(vertical = 8.dp)
             ) {
-                items(categories) { cat ->
+                items(REVIEW_CATEGORIES) { cat ->
                     val isSelected = selectedCategory == cat
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = if (isSelected) BleuRoy else Color(0xFFF1F5F9),
+                        color = if (isSelected) RoyalBlue else Color(0xFFF1F5F9),
                         modifier = Modifier
                             .clickable { viewModel.setCategory(cat) }
                             .testTag("category_chip_${cat.replace(" ", "_")}")
                     ) {
                         Text(
-                            text = if (cat == "All") "Toutes les cartes" else cat,
-                            color = if (isSelected) Color.White else TextSecondaire,
+                            text = if (cat == "All") "All cards" else cat,
+                            color = if (isSelected) Color.White else TextSecondary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
@@ -165,7 +167,6 @@ fun FlashcardsScreen(
             }
 
             if (isCompleted || activeCards.isEmpty()) {
-                // Completed State
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -179,55 +180,54 @@ fun FlashcardsScreen(
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = null,
-                            tint = VertSucces,
+                            tint = SuccessGreen,
                             modifier = Modifier.size(64.dp)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "Session Terminée !",
+                            text = "Session complete!",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Vous avez révisé tous les mots de cette session. Votre mémoire à long terme se renforce selon l'algorithme SM-2.",
+                            text = "You reviewed every word in this session. Your long-term memory is strengthening thanks to the SM-2 algorithm.",
                             textAlign = TextAlign.Center,
-                            color = TextSecondaire,
+                            color = TextSecondary,
                             fontSize = 13.sp,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(
                             onClick = { viewModel.restartReview() },
-                            colors = ButtonDefaults.buttonColors(containerColor = BleuRoy),
+                            colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.testTag("restart_review_btn")
                         ) {
                             Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Revoir la sélection")
+                            Text("Review again")
                         }
                     }
                 }
             } else {
                 val currentCard = activeCards[currentIndex.coerceIn(activeCards.indices)]
 
-                // Progress Bar
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Carte ${currentIndex + 1} sur ${activeCards.size}",
+                            text = "Card ${currentIndex + 1} of ${activeCards.size}",
                             fontSize = 12.sp,
-                            color = TextSecondaire,
+                            color = TextSecondary,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = "Intervalle : ${currentCard.intervalDays}j",
+                            text = "Interval: ${currentCard.intervalDays}d",
                             fontSize = 12.sp,
-                            color = BleuRoy,
+                            color = RoyalBlue,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -238,14 +238,13 @@ fun FlashcardsScreen(
                             .fillMaxWidth()
                             .height(6.dp)
                             .clip(RoundedCornerShape(3.dp)),
-                        color = BleuRoy,
+                        color = RoyalBlue,
                         trackColor = Color(0xFFDBEAFE)
                     )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Interactive 3D Flip Flashcard
                 // The rotation drives both the animation and which face is
                 // visible; the back face is counter-rotated so it reads
                 // correctly once the card passes 90°.
@@ -289,7 +288,6 @@ fun FlashcardsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // SM-2 Rating Buttons (Active Recall scoring)
                 if (isFlipped) {
                     Row(
                         modifier = Modifier
@@ -298,30 +296,30 @@ fun FlashcardsScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Sm2RatingButton(
-                            label = "À revoir",
-                            subLabel = "1j",
-                            color = RougeFrance,
+                            label = "Again",
+                            subLabel = "1d",
+                            color = com.example.ui.theme.FrenchRed,
                             onClick = { viewModel.reviewCurrentCard(ReviewRating.AGAIN) },
                             modifier = Modifier.weight(1f)
                         )
                         Sm2RatingButton(
-                            label = "Difficile",
-                            subLabel = "${currentCard.intervalDays}j",
-                            color = OrParis,
+                            label = "Hard",
+                            subLabel = "${currentCard.intervalDays}d",
+                            color = GoldDark,
                             onClick = { viewModel.reviewCurrentCard(ReviewRating.HARD) },
                             modifier = Modifier.weight(1f)
                         )
                         Sm2RatingButton(
-                            label = "Bien",
-                            subLabel = "${currentCard.intervalDays * 2}j",
-                            color = BleuRoy,
+                            label = "Good",
+                            subLabel = "${currentCard.intervalDays * 2}d",
+                            color = RoyalBlue,
                             onClick = { viewModel.reviewCurrentCard(ReviewRating.GOOD) },
                             modifier = Modifier.weight(1f)
                         )
                         Sm2RatingButton(
-                            label = "Facile",
-                            subLabel = "${currentCard.intervalDays * 3}j",
-                            color = VertSucces,
+                            label = "Easy",
+                            subLabel = "${currentCard.intervalDays * 3}d",
+                            color = SuccessGreen,
                             onClick = { viewModel.reviewCurrentCard(ReviewRating.EASY) },
                             modifier = Modifier.weight(1f)
                         )
@@ -329,7 +327,7 @@ fun FlashcardsScreen(
                 } else {
                     Button(
                         onClick = { viewModel.flipCard() },
-                        colors = ButtonDefaults.buttonColors(containerColor = BleuRoy),
+                        colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -337,14 +335,13 @@ fun FlashcardsScreen(
                             .padding(bottom = 8.dp)
                             .testTag("reveal_card_btn")
                     ) {
-                        Text("Révéler la réponse", fontWeight = FontWeight.Bold)
+                        Text("Reveal answer", fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
     }
 
-    // Add Custom Flashcard Dialog
     if (showAddDialog) {
         var frenchWord by remember { mutableStateOf("") }
         var gender by remember { mutableStateOf("un") }
@@ -352,14 +349,11 @@ fun FlashcardsScreen(
         var pronunciation by remember { mutableStateOf("") }
         var exampleSentence by remember { mutableStateOf("") }
         var exampleTranslation by remember { mutableStateOf("") }
-        var category by remember { mutableStateOf("Custom") }
 
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            title = { Text("Ajouter un mot de vocabulaire") },
+            title = { Text("Add a vocabulary word") },
             text = {
-                // Scrollable: the dialog now carries six inputs and would
-                // otherwise clip the last fields on shorter screens.
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.verticalScroll(rememberScrollState())
@@ -367,19 +361,19 @@ fun FlashcardsScreen(
                     OutlinedTextField(
                         value = frenchWord,
                         onValueChange = { frenchWord = it },
-                        label = { Text("Mot en français *") },
+                        label = { Text("French word *") },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("le", "la", "un", "une", "").forEach { g ->
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (gender == g) BleuRoy else Color(0xFFF1F5F9),
+                                color = if (gender == g) RoyalBlue else Color(0xFFF1F5F9),
                                 modifier = Modifier.clickable { gender = g }
                             ) {
                                 Text(
-                                    text = if (g.isEmpty()) "aucun" else g,
-                                    color = if (gender == g) Color.White else TextSecondaire,
+                                    text = if (g.isEmpty()) "none" else g,
+                                    color = if (gender == g) Color.White else TextSecondary,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -390,27 +384,27 @@ fun FlashcardsScreen(
                     OutlinedTextField(
                         value = englishMeaning,
                         onValueChange = { englishMeaning = it },
-                        label = { Text("Signification en anglais *") },
+                        label = { Text("English meaning *") },
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = exampleSentence,
                         onValueChange = { exampleSentence = it },
-                        label = { Text("Exemple de phrase en français") },
+                        label = { Text("Example sentence (French)") },
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = exampleTranslation,
                         onValueChange = { exampleTranslation = it },
-                        label = { Text("Traduction de l'exemple (anglais)") },
+                        label = { Text("Example translation (English)") },
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = pronunciation,
                         onValueChange = { pronunciation = it },
-                        label = { Text("Prononciation (API)") },
-                        placeholder = { Text("ex. bɔ̃ʒuʁ") },
-                        supportingText = { Text("Optionnel — affichée sous le mot sur la carte") },
+                        label = { Text("Pronunciation (IPA)") },
+                        placeholder = { Text("e.g. bɔ̃ʒuʁ") },
+                        supportingText = { Text("Optional — shown under the word on the card") },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -426,19 +420,19 @@ fun FlashcardsScreen(
                                 pronunciation = pronunciation,
                                 exampleSentence = exampleSentence,
                                 exampleTranslation = exampleTranslation,
-                                category = category
+                                category = "Custom"
                             )
                             showAddDialog = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BleuRoy)
+                    colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue)
                 ) {
-                    Text("Enregistrer")
+                    Text("Save")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showAddDialog = false }) {
-                    Text("Annuler")
+                    Text("Cancel")
                 }
             }
         )
@@ -456,7 +450,7 @@ fun Sm2RatingButton(
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = color.copy(alpha = 0.12f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.5f)),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.5f)),
         modifier = modifier
             .height(52.dp)
             .clickable { onClick() }
@@ -479,7 +473,7 @@ private fun FlashcardTopRow(
     card: FlashcardEntity,
     ttsManager: FrenchTtsManager
 ) {
-    val isDarkTheme = isSystemInDarkTheme()
+    val isDark = isSystemInDarkTheme()
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -490,18 +484,18 @@ private fun FlashcardTopRow(
             Spacer(modifier = Modifier.width(6.dp))
             Surface(
                 shape = RoundedCornerShape(6.dp),
-                color = if (isDarkTheme) Color.White.copy(alpha = 0.1f) else Color(0xFFF1F5F9)
+                color = if (isDark) Color.White.copy(alpha = 0.1f) else Color(0xFFF1F5F9)
             ) {
                 Text(
                     text = card.category,
                     fontSize = 11.sp,
-                    color = TextSecondaire,
+                    color = TextSecondary,
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                 )
             }
         }
 
-        FrenchAudioButton(
+        PronounceButton(
             textToSpeak = card.frenchWord,
             ttsManager = ttsManager,
             modifier = Modifier.size(36.dp)
@@ -516,9 +510,7 @@ private fun FlashcardFrontFace(
     ttsManager: FrenchTtsManager,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier.padding(24.dp)
-    ) {
+    Box(modifier = modifier.padding(24.dp)) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween,
@@ -534,7 +526,7 @@ private fun FlashcardFrontFace(
                     text = card.frenchWord,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.ExtraBold,
-                    color = BleuRoy,
+                    color = RoyalBlue,
                     textAlign = TextAlign.Center
                 )
 
@@ -543,7 +535,7 @@ private fun FlashcardFrontFace(
                     Text(
                         text = card.pronunciation,
                         fontSize = 14.sp,
-                        color = TextSecondaire
+                        color = TextSecondary
                     )
                 }
 
@@ -556,22 +548,22 @@ private fun FlashcardFrontFace(
                     Icon(
                         imageVector = Icons.Default.TouchApp,
                         contentDescription = null,
-                        tint = TextSecondaire,
+                        tint = TextSecondary,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Touchez la carte pour révéler la signification",
+                        text = "Tap the card to reveal the meaning",
                         fontSize = 12.sp,
-                        color = TextSecondaire
+                        color = TextSecondary
                     )
                 }
             }
 
             Text(
-                text = "Rappel actif : devinez avant de retourner !",
+                text = "Active recall: guess before you flip!",
                 fontSize = 11.sp,
-                color = TextSecondaire
+                color = TextSecondary
             )
         }
     }
@@ -584,10 +576,8 @@ private fun FlashcardBackFace(
     ttsManager: FrenchTtsManager,
     modifier: Modifier = Modifier
 ) {
-    val isDarkTheme = isSystemInDarkTheme()
-    Box(
-        modifier = modifier.padding(24.dp)
-    ) {
+    val isDark = isSystemInDarkTheme()
+    Box(modifier = modifier.padding(24.dp)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -602,7 +592,7 @@ private fun FlashcardBackFace(
                 text = card.frenchWord,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.ExtraBold,
-                color = BleuRoy,
+                color = RoyalBlue,
                 textAlign = TextAlign.Center
             )
 
@@ -620,7 +610,7 @@ private fun FlashcardBackFace(
                 Spacer(modifier = Modifier.height(16.dp))
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = if (isDarkTheme) Color.White.copy(alpha = 0.06f) else Color(0xFFF8FAFC),
+                    color = if (isDark) Color.White.copy(alpha = 0.06f) else Color(0xFFF8FAFC),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
@@ -630,12 +620,12 @@ private fun FlashcardBackFace(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "Exemple en contexte :",
+                                text = "Example in context:",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextSecondaire
+                                color = TextSecondary
                             )
-                            FrenchAudioButton(
+                            PronounceButton(
                                 textToSpeak = card.exampleSentence,
                                 ttsManager = ttsManager,
                                 modifier = Modifier.size(24.dp)
@@ -652,8 +642,8 @@ private fun FlashcardBackFace(
                             Text(
                                 text = card.exampleTranslation,
                                 fontSize = 12.sp,
-                                color = TextSecondaire,
-                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                color = TextSecondary,
+                                fontStyle = FontStyle.Italic
                             )
                         }
                     }
@@ -663,9 +653,9 @@ private fun FlashcardBackFace(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Évaluez votre rappel ci-dessous",
+                text = "Rate your recall below",
                 fontSize = 11.sp,
-                color = TextSecondaire,
+                color = TextSecondary,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
         }

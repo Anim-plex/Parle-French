@@ -1,27 +1,20 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.testTag
@@ -29,17 +22,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.FrenchTtsManager
-import com.example.ui.theme.BleuRoy
-import com.example.ui.theme.OrAccent
-import com.example.ui.theme.OrClair
-import com.example.ui.theme.RougeFrance
-import com.example.ui.theme.TextSecondaire
-import com.example.ui.theme.VertSucces
+import com.example.ui.theme.FrenchRed
+import com.example.ui.theme.RoyalBlue
 
 /**
- * Badge palette helper: on dark surfaces the pastel backgrounds are
- * swapped for translucent tints with lightened foregrounds so badges
- * keep their meaning (and contrast) in both themes.
+ * On dark surfaces the pastel badge backgrounds are swapped for translucent
+ * tints with lightened foregrounds, so badges keep their meaning (and their
+ * contrast) in both themes.
  */
 @Composable
 private fun badgeColors(background: Color, foreground: Color): Pair<Color, Color> {
@@ -47,13 +36,14 @@ private fun badgeColors(background: Color, foreground: Color): Pair<Color, Color
     return foreground.copy(alpha = 0.22f) to lerp(foreground, Color.White, 0.45f)
 }
 
+/** Plays the French pronunciation of [textToSpeak] through the device TTS engine. */
 @Composable
-fun FrenchAudioButton(
+fun PronounceButton(
     textToSpeak: String,
     ttsManager: FrenchTtsManager,
     modifier: Modifier = Modifier,
     slow: Boolean = false,
-    tint: Color = BleuRoy
+    tint: Color = RoyalBlue
 ) {
     IconButton(
         onClick = { ttsManager.speak(textToSpeak, slow) },
@@ -63,15 +53,16 @@ fun FrenchAudioButton(
     ) {
         Icon(
             imageVector = Icons.Default.VolumeUp,
-            contentDescription = "Écouter la prononciation française",
+            contentDescription = "Play French pronunciation",
             tint = tint,
             modifier = Modifier.size(24.dp)
         )
     }
 }
 
+/** Compact CEFR level chip (A1–C2) with a level-appropriate colour. */
 @Composable
-fun CefrLevelBadge(
+fun CefrBadge(
     level: String,
     modifier: Modifier = Modifier
 ) {
@@ -85,11 +76,7 @@ fun CefrLevelBadge(
     }
     val (bg, fg) = badgeColors(base.first, base.second)
 
-    Surface(
-        color = bg,
-        shape = RoundedCornerShape(8.dp),
-        modifier = modifier
-    ) {
+    Surface(color = bg, shape = RoundedCornerShape(8.dp), modifier = modifier) {
         Text(
             text = level,
             color = fg,
@@ -100,6 +87,7 @@ fun CefrLevelBadge(
     }
 }
 
+/** French grammatical gender chip ("le", "la", "un", "une"). */
 @Composable
 fun GenderBadge(
     gender: String,
@@ -108,17 +96,13 @@ fun GenderBadge(
     if (gender.isBlank()) return
 
     val base = when (gender.lowercase().trim()) {
-        "le", "un", "masculin" -> Color(0xFFDBEAFE) to BleuRoy
-        "la", "une", "féminin" -> Color(0xFFFCE7F3) to Color(0xFFBE185D)
+        "le", "un", "masculine" -> Color(0xFFDBEAFE) to RoyalBlue
+        "la", "une", "feminine" -> Color(0xFFFCE7F3) to Color(0xFFBE185D)
         else -> Color(0xFFF1F5F9) to Color(0xFF64748B)
     }
     val (bg, fg) = badgeColors(base.first, base.second)
 
-    Surface(
-        color = bg,
-        shape = RoundedCornerShape(6.dp),
-        modifier = modifier
-    ) {
+    Surface(color = bg, shape = RoundedCornerShape(6.dp), modifier = modifier) {
         Text(
             text = gender,
             color = fg,
@@ -129,14 +113,15 @@ fun GenderBadge(
     }
 }
 
+/** Thin blue / white / red accent bar used under section headers. */
 @Composable
-fun FrenchTricolorStripe(modifier: Modifier = Modifier) {
+fun TricolorStripe(modifier: Modifier = Modifier) {
     Row(modifier = modifier) {
         Box(
             modifier = Modifier
                 .weight(1f)
                 .size(height = 3.dp, width = 10.dp)
-                .background(BleuRoy)
+                .background(RoyalBlue)
         )
         Box(
             modifier = Modifier
@@ -148,7 +133,7 @@ fun FrenchTricolorStripe(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .weight(1f)
                 .size(height = 3.dp, width = 10.dp)
-                .background(RougeFrance)
+                .background(FrenchRed)
         )
     }
 }

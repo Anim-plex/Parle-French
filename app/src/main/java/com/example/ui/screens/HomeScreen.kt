@@ -52,14 +52,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.data.local.UserStatsEntity
-import com.example.ui.components.CefrLevelBadge
-import com.example.ui.components.FrenchTricolorStripe
-import com.example.ui.theme.BleuRoy
-import com.example.ui.theme.OrAccent
-import com.example.ui.theme.OrParis
-import com.example.ui.theme.RougeFrance
-import com.example.ui.theme.TextSecondaire
-import com.example.ui.theme.VertSucces
+import com.example.ui.components.CefrBadge
+import com.example.ui.components.TricolorStripe
+import com.example.ui.theme.FrenchRed
+import com.example.ui.theme.Gold
+import com.example.ui.theme.GoldDark
+import com.example.ui.theme.RoyalBlue
+import com.example.ui.theme.SuccessGreen
+import com.example.ui.theme.TextSecondary
 
 @Composable
 fun HomeScreen(
@@ -74,21 +74,21 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val stats = userStats ?: UserStatsEntity()
-    val isDarkTheme = isSystemInDarkTheme()
+    val isDark = isSystemInDarkTheme()
 
-    // Sync-status chip colors: light pastels in light mode, translucent
-    // tints in dark mode so the chip never reads as a white slab.
+    // Sync chip colours: soft pastels in light mode, translucent tints in dark
+    // mode so the chip never reads as a bright slab.
     val syncChipBg = when {
-        isDarkTheme && isSignedIn -> VertSucces.copy(alpha = 0.18f)
-        isDarkTheme -> Color.White.copy(alpha = 0.08f)
+        isDark && isSignedIn -> SuccessGreen.copy(alpha = 0.18f)
+        isDark -> Color.White.copy(alpha = 0.08f)
         isSignedIn -> Color(0xFFDCFCE7)
         else -> Color(0xFFF1F5F9)
     }
     val syncChipFg = when {
-        isDarkTheme && isSignedIn -> lerp(VertSucces, Color.White, 0.35f)
-        isDarkTheme -> TextSecondaire
+        isDark && isSignedIn -> lerp(SuccessGreen, Color.White, 0.35f)
+        isDark -> TextSecondary
         isSignedIn -> Color(0xFF15803D)
-        else -> TextSecondaire
+        else -> TextSecondary
     }
 
     LazyColumn(
@@ -97,7 +97,7 @@ fun HomeScreen(
             .testTag("home_screen"),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // App Bar & Brand Header
+        // Brand header + cloud status
         item {
             Column(
                 modifier = Modifier
@@ -112,7 +112,7 @@ fun HomeScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
                             shape = CircleShape,
-                            color = BleuRoy,
+                            color = RoyalBlue,
                             modifier = Modifier.size(42.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -128,14 +128,13 @@ fun HomeScreen(
                                 color = MaterialTheme.colorScheme.onBackground
                             )
                             Text(
-                                text = "Immersion & Aisance Conversationnelle",
+                                text = "Speak French with confidence",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondaire
+                                color = TextSecondary
                             )
                         }
                     }
 
-                    // Cloud Sync Indicator Chip
                     Surface(
                         shape = RoundedCornerShape(20.dp),
                         color = syncChipBg,
@@ -149,13 +148,13 @@ fun HomeScreen(
                         ) {
                             Icon(
                                 imageVector = if (isSignedIn) Icons.Default.CloudDone else Icons.Default.CloudOff,
-                                contentDescription = "État de synchronisation",
+                                contentDescription = "Sync status",
                                 tint = syncChipFg,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = if (isSignedIn) "Synchronisé" else "Hors-ligne",
+                                text = if (isSignedIn) "Synced" else "Offline",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = syncChipFg
@@ -164,11 +163,11 @@ fun HomeScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                FrenchTricolorStripe(modifier = Modifier.fillMaxWidth())
+                TricolorStripe(modifier = Modifier.fillMaxWidth())
             }
         }
 
-        // Hero Banner with Parisian Café Illustration
+        // Hero banner
         item {
             Box(
                 modifier = Modifier
@@ -180,11 +179,10 @@ fun HomeScreen(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.french_cafe_banner_1792000877892),
-                    contentDescription = "Terrasse de café parisien",
+                    contentDescription = "A Parisian café terrace",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
-                // Gradient Scrim
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -200,10 +198,10 @@ fun HomeScreen(
                         .padding(16.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        CefrLevelBadge(level = stats.targetLevel)
+                        CefrBadge(level = stats.targetLevel)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Niveau Cible : ${stats.targetLevel}",
+                            text = "Target level: ${stats.targetLevel}",
                             color = Color.White,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium
@@ -211,13 +209,13 @@ fun HomeScreen(
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Bonjour ! Prêt pour votre immersion ?",
+                        text = "Bonjour! Ready to practise?",
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Entraînez-vous à parler avec des situations réalistes et de l'IA en direct.",
+                        text = "Rehearse real-life situations with a live AI conversation partner.",
                         color = Color(0xFFE2E8F0),
                         fontSize = 12.sp
                     )
@@ -225,7 +223,7 @@ fun HomeScreen(
             }
         }
 
-        // Personalized Performance & Fluency Tracking Card
+        // Progress card
         item {
             Card(
                 modifier = Modifier
@@ -243,22 +241,22 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Votre Progression",
+                            text = "Your progress",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.LocalFireDepartment,
-                                contentDescription = "Série active",
-                                tint = RougeFrance,
+                                contentDescription = "Active streak",
+                                tint = FrenchRed,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "${stats.streakDays} jours de suite",
+                                text = "${stats.streakDays}-day streak",
                                 fontWeight = FontWeight.Bold,
-                                color = RougeFrance,
+                                color = FrenchRed,
                                 fontSize = 13.sp
                             )
                         }
@@ -266,13 +264,12 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Fluency score bar
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Aisance Conversationnelle", fontSize = 13.sp, color = TextSecondaire)
-                        Text("${stats.fluencyScore}%", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = BleuRoy)
+                        Text("Conversational fluency", fontSize = 13.sp, color = TextSecondary)
+                        Text("${stats.fluencyScore}%", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = RoyalBlue)
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     LinearProgressIndicator(
@@ -281,35 +278,25 @@ fun HomeScreen(
                             .fillMaxWidth()
                             .height(8.dp)
                             .clip(RoundedCornerShape(4.dp)),
-                        color = BleuRoy,
+                        color = RoyalBlue,
                         trackColor = Color(0xFFDBEAFE)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Stat Counters Grid
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "$dueCardsCount", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = OrAccent)
-                            Text(text = "À réviser", fontSize = 12.sp, color = TextSecondaire)
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "${stats.cardsMastered}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = VertSucces)
-                            Text(text = "Cartes maîtrisées", fontSize = 12.sp, color = TextSecondaire)
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "${stats.roleplaysCompleted}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = BleuRoy)
-                            Text(text = "Jeux de rôle", fontSize = 12.sp, color = TextSecondaire)
-                        }
+                        StatCounter(value = "$dueCardsCount", label = "Due today", color = GoldDark)
+                        StatCounter(value = "${stats.cardsMastered}", label = "Cards mastered", color = SuccessGreen)
+                        StatCounter(value = "${stats.roleplaysCompleted}", label = "Roleplays", color = RoyalBlue)
                     }
                 }
             }
         }
 
-        // Feature Navigation Grid
+        // Learning modules grid
         item {
             Column(
                 modifier = Modifier
@@ -317,7 +304,7 @@ fun HomeScreen(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "Modules d'Apprentissage",
+                    text = "Learning modules",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 12.dp)
@@ -328,20 +315,20 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     FeatureHubCard(
-                        title = "Jeux de Rôle IA",
-                        subtitle = "Dialogues & retour temps réel",
+                        title = "AI Roleplay",
+                        subtitle = "Live dialogue & feedback",
                         icon = Icons.Default.Chat,
-                        iconTint = BleuRoy,
-                        badgeText = "Fluence",
+                        iconTint = RoyalBlue,
+                        badgeText = "Fluency",
                         onClick = onNavigateToRoleplay,
                         modifier = Modifier.weight(1f)
                     )
                     FeatureHubCard(
-                        title = "Répétition SRS",
-                        subtitle = "Cartes mémoire SM-2",
+                        title = "Spaced Repetition",
+                        subtitle = "SM-2 flashcards",
                         icon = Icons.Default.Style,
-                        iconTint = OrParis,
-                        badgeText = "$dueCardsCount dues",
+                        iconTint = Gold,
+                        badgeText = "$dueCardsCount due",
                         onClick = onNavigateToFlashcards,
                         modifier = Modifier.weight(1f)
                     )
@@ -354,20 +341,20 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     FeatureHubCard(
-                        title = "Vision & Objets",
-                        subtitle = "Reconnaissance visuelle",
+                        title = "Vision & Objects",
+                        subtitle = "Learn from any photo",
                         icon = Icons.Default.CameraAlt,
-                        iconTint = VertSucces,
-                        badgeText = "Photos & IA",
+                        iconTint = SuccessGreen,
+                        badgeText = "Photos & AI",
                         onClick = onNavigateToVision,
                         modifier = Modifier.weight(1f)
                     )
                     FeatureHubCard(
-                        title = "Examens & DELF",
-                        subtitle = "Essais & syntaxe notés",
+                        title = "Exams & DELF",
+                        subtitle = "Graded essays & quizzes",
                         icon = Icons.Default.Description,
-                        iconTint = RougeFrance,
-                        badgeText = "A1 - B2",
+                        iconTint = FrenchRed,
+                        badgeText = "A2 - B2",
                         onClick = onNavigateToExam,
                         modifier = Modifier.weight(1f)
                     )
@@ -375,7 +362,7 @@ fun HomeScreen(
             }
         }
 
-        // Today's Spotlight Roleplay
+        // Recommended roleplay
         item {
             Card(
                 modifier = Modifier
@@ -385,7 +372,7 @@ fun HomeScreen(
                     .testTag("spotlight_card"),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (isDarkTheme) BleuRoy.copy(alpha = 0.16f) else Color(0xFFEFF6FF)
+                    containerColor = if (isDark) RoyalBlue.copy(alpha = 0.16f) else Color(0xFFEFF6FF)
                 )
             ) {
                 Row(
@@ -394,7 +381,7 @@ fun HomeScreen(
                 ) {
                     Surface(
                         shape = CircleShape,
-                        color = BleuRoy,
+                        color = RoyalBlue,
                         modifier = Modifier.size(48.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
@@ -408,34 +395,42 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Scénario Recommandé",
+                            text = "RECOMMENDED SCENARIO",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = BleuRoy
+                            color = RoyalBlue
                         )
                         Text(
-                            text = "Commander au Café Parisien",
+                            text = "Order at a Parisian café",
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
-                            text = "Pratiquez la commande, l'addition et la politesse.",
+                            text = "Practise ordering, the bill and polite phrases.",
                             fontSize = 12.sp,
-                            color = TextSecondaire
+                            color = TextSecondary
                         )
                     }
                     Button(
                         onClick = onNavigateToRoleplay,
-                        colors = ButtonDefaults.buttonColors(containerColor = BleuRoy),
+                        colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.testTag("start_spotlight_btn")
                     ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = "Démarrer", modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.PlayArrow, contentDescription = "Start", modifier = Modifier.size(18.dp))
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun StatCounter(value: String, label: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
+        Text(text = label, fontSize = 12.sp, color = TextSecondary)
     }
 }
 
@@ -457,9 +452,7 @@ fun FeatureHubCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(14.dp)
-        ) {
+        Column(modifier = Modifier.padding(14.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -482,7 +475,7 @@ fun FeatureHubCard(
                         text = badgeText,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextSecondaire,
+                        color = TextSecondary,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
@@ -490,7 +483,7 @@ fun FeatureHubCard(
 
             Spacer(modifier = Modifier.height(10.dp))
             Text(text = title, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Text(text = subtitle, fontSize = 11.sp, color = TextSecondaire, maxLines = 1)
+            Text(text = subtitle, fontSize = 11.sp, color = TextSecondary, maxLines = 1)
         }
     }
 }

@@ -40,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,9 +57,8 @@ import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.ProfileScreen
 import com.example.ui.screens.RoleplayScreen
 import com.example.ui.screens.VisionVocabularyScreen
-import com.example.ui.theme.BleuRoy
 import com.example.ui.theme.ParleFrenchTheme
-import com.example.ui.theme.TextSecondaire
+import com.example.ui.theme.RoyalBlue
 import com.example.ui.vision.VisionVocabularyViewModel
 
 enum class ParleScreen {
@@ -70,11 +70,28 @@ enum class ParleScreen {
     PROFILE
 }
 
+private data class NavItem(
+    val screen: ParleScreen,
+    val label: String,
+    val filledIcon: ImageVector,
+    val outlinedIcon: ImageVector,
+    val testTag: String
+)
+
+private val NAV_ITEMS = listOf(
+    NavItem(ParleScreen.HOME, "Home", Icons.Filled.Home, Icons.Outlined.Home, "nav_home"),
+    NavItem(ParleScreen.ROLEPLAY, "Roleplay", Icons.Filled.Chat, Icons.Outlined.Chat, "nav_roleplay"),
+    NavItem(ParleScreen.FLASHCARDS, "Cards", Icons.Filled.Style, Icons.Outlined.Style, "nav_flashcards"),
+    NavItem(ParleScreen.VISION, "Vision", Icons.Filled.CameraAlt, Icons.Outlined.CameraAlt, "nav_vision"),
+    NavItem(ParleScreen.EXAM, "Exams", Icons.Filled.Description, Icons.Outlined.Description, "nav_exam"),
+    NavItem(ParleScreen.PROFILE, "Profile", Icons.Filled.Person, Icons.Outlined.Person, "nav_profile")
+)
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // STEP 1: Mandatory App Check configuration with launch intent before any UI or Firebase operations
+        // Step 1: App Check must be configured before any UI or Firebase use.
         configureAppCheck(this, intent)
 
         enableEdgeToEdge()
@@ -90,9 +107,7 @@ class MainActivity : ComponentActivity() {
             val ttsManager = remember { FrenchTtsManager(this) }
 
             DisposableEffect(Unit) {
-                onDispose {
-                    ttsManager.shutdown()
-                }
+                onDispose { ttsManager.shutdown() }
             }
 
             LaunchedEffect(Unit) {
@@ -143,119 +158,26 @@ fun MainAppNavigation(
                 containerColor = MaterialTheme.colorScheme.surface,
                 tonalElevation = 8.dp
             ) {
-                NavigationBarItem(
-                    selected = currentScreen == ParleScreen.HOME,
-                    onClick = { currentScreen = ParleScreen.HOME },
-                    icon = {
-                        Icon(
-                            if (currentScreen == ParleScreen.HOME) Icons.Filled.Home else Icons.Outlined.Home,
-                            contentDescription = "Accueil",
-                            modifier = Modifier.size(22.dp)
-                        )
-                    },
-                    label = { Text("Accueil", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BleuRoy,
-                        selectedTextColor = BleuRoy,
-                        indicatorColor = BleuRoy.copy(alpha = 0.12f)
-                    ),
-                    modifier = Modifier.testTag("nav_home")
-                )
-
-                NavigationBarItem(
-                    selected = currentScreen == ParleScreen.ROLEPLAY,
-                    onClick = { currentScreen = ParleScreen.ROLEPLAY },
-                    icon = {
-                        Icon(
-                            if (currentScreen == ParleScreen.ROLEPLAY) Icons.Filled.Chat else Icons.Outlined.Chat,
-                            contentDescription = "Jeux de Rôle",
-                            modifier = Modifier.size(22.dp)
-                        )
-                    },
-                    label = { Text("Rôle", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BleuRoy,
-                        selectedTextColor = BleuRoy,
-                        indicatorColor = BleuRoy.copy(alpha = 0.12f)
-                    ),
-                    modifier = Modifier.testTag("nav_roleplay")
-                )
-
-                NavigationBarItem(
-                    selected = currentScreen == ParleScreen.FLASHCARDS,
-                    onClick = { currentScreen = ParleScreen.FLASHCARDS },
-                    icon = {
-                        Icon(
-                            if (currentScreen == ParleScreen.FLASHCARDS) Icons.Filled.Style else Icons.Outlined.Style,
-                            contentDescription = "Cartes Mémoire",
-                            modifier = Modifier.size(22.dp)
-                        )
-                    },
-                    label = { Text("Cartes", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BleuRoy,
-                        selectedTextColor = BleuRoy,
-                        indicatorColor = BleuRoy.copy(alpha = 0.12f)
-                    ),
-                    modifier = Modifier.testTag("nav_flashcards")
-                )
-
-                NavigationBarItem(
-                    selected = currentScreen == ParleScreen.VISION,
-                    onClick = { currentScreen = ParleScreen.VISION },
-                    icon = {
-                        Icon(
-                            if (currentScreen == ParleScreen.VISION) Icons.Filled.CameraAlt else Icons.Outlined.CameraAlt,
-                            contentDescription = "Vision & Objets",
-                            modifier = Modifier.size(22.dp)
-                        )
-                    },
-                    label = { Text("Vision", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BleuRoy,
-                        selectedTextColor = BleuRoy,
-                        indicatorColor = BleuRoy.copy(alpha = 0.12f)
-                    ),
-                    modifier = Modifier.testTag("nav_vision")
-                )
-
-                NavigationBarItem(
-                    selected = currentScreen == ParleScreen.EXAM,
-                    onClick = { currentScreen = ParleScreen.EXAM },
-                    icon = {
-                        Icon(
-                            if (currentScreen == ParleScreen.EXAM) Icons.Filled.Description else Icons.Outlined.Description,
-                            contentDescription = "Examens DELF",
-                            modifier = Modifier.size(22.dp)
-                        )
-                    },
-                    label = { Text("DELF", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BleuRoy,
-                        selectedTextColor = BleuRoy,
-                        indicatorColor = BleuRoy.copy(alpha = 0.12f)
-                    ),
-                    modifier = Modifier.testTag("nav_exam")
-                )
-
-                NavigationBarItem(
-                    selected = currentScreen == ParleScreen.PROFILE,
-                    onClick = { currentScreen = ParleScreen.PROFILE },
-                    icon = {
-                        Icon(
-                            if (currentScreen == ParleScreen.PROFILE) Icons.Filled.Person else Icons.Outlined.Person,
-                            contentDescription = "Profil & Sync",
-                            modifier = Modifier.size(22.dp)
-                        )
-                    },
-                    label = { Text("Profil", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BleuRoy,
-                        selectedTextColor = BleuRoy,
-                        indicatorColor = BleuRoy.copy(alpha = 0.12f)
-                    ),
-                    modifier = Modifier.testTag("nav_profile")
-                )
+                NAV_ITEMS.forEach { item ->
+                    NavigationBarItem(
+                        selected = currentScreen == item.screen,
+                        onClick = { currentScreen = item.screen },
+                        icon = {
+                            Icon(
+                                imageVector = if (currentScreen == item.screen) item.filledIcon else item.outlinedIcon,
+                                contentDescription = item.label,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        },
+                        label = { Text(item.label, fontSize = 10.sp) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = RoyalBlue,
+                            selectedTextColor = RoyalBlue,
+                            indicatorColor = RoyalBlue.copy(alpha = 0.12f)
+                        ),
+                        modifier = Modifier.testTag(item.testTag)
+                    )
+                }
             }
         }
     ) { innerPadding ->

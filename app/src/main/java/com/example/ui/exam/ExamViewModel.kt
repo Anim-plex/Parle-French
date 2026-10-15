@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+/** A grammar quiz question. The prompt and explanation are English; the sentence being completed is French. */
 data class QuizQuestion(
     val id: String,
     val question: String,
@@ -23,6 +24,7 @@ data class QuizQuestion(
     val explanation: String
 )
 
+/** A writing task. Instructions are English; the sample opening phrase is French. */
 data class ExamPrompt(
     val id: String,
     val type: String, // "DELF A2", "DELF B1", "DELF B2", "DALF C1"
@@ -44,25 +46,25 @@ class ExamViewModel(
         ExamPrompt(
             id = "delf_a2_invitation",
             type = "DELF A2",
-            title = "Réponse à une invitation amicale",
-            targetWordCount = "60-80 mots",
-            instructions = "Un ami français vous invite à passer le week-end chez lui en Normandie. Écrivez-lui un message pour le remercier, accepter avec enthousiasme, et lui demander l'heure d'arrivée idéale.",
+            title = "Replying to a friend's invitation",
+            targetWordCount = "60-80 words",
+            instructions = "A French friend has invited you to spend the weekend at his home in Normandy. Write a message to thank him, accept enthusiastically, and ask what time you should arrive.",
             sampleStartingPhrase = "Salut Thomas ! Merci beaucoup pour ton invitation qui me fait très plaisir..."
         ),
         ExamPrompt(
             id = "delf_b1_reclamation",
             type = "DELF B1",
-            title = "Courrier formel : Lettre de réclamation",
-            targetWordCount = "160-180 mots",
-            instructions = "Vous venez d'emménager dans un appartement en France et le chauffage ne fonctionne pas en plein hiver. Écrivez au propriétaire pour décrire la situation, exposer les désagréments et exiger une réparation rapide.",
+            title = "Formal letter: a complaint",
+            targetWordCount = "160-180 words",
+            instructions = "You have just moved into a flat in France and the heating stopped working in the middle of winter. Write to the landlord to describe the situation, explain the inconvenience, and ask for a quick repair.",
             sampleStartingPhrase = "Monsieur, Je me permets de vous contacter au sujet de mon appartement situé au..."
         ),
         ExamPrompt(
             id = "delf_b2_semaine4jours",
             type = "DELF B2",
-            title = "Essai argumentatif : La semaine de 4 jours",
-            targetWordCount = "250 mots",
-            instructions = "Rédigez un texte argumenté pour le journal de votre entreprise. Défendez les avantages de la semaine de 4 jours pour la productivité et la santé, tout en nuançant les défis d'organisation.",
+            title = "Argumentative essay: the 4-day week",
+            targetWordCount = "250 words",
+            instructions = "Write an opinion piece for your company newsletter. Argue for the benefits of the 4-day week for productivity and wellbeing, while acknowledging the organisational challenges.",
             sampleStartingPhrase = "De nos jours, l'organisation du travail connaît une profonde mutation..."
         )
     )
@@ -70,15 +72,15 @@ class ExamViewModel(
     val grammarQuizQuestions = listOf(
         QuizQuestion(
             id = "q1",
-            question = "Choisissez la forme correcte du subjonctif :",
+            question = "Choose the correct subjunctive form:",
             contextSentence = "Il est primordial que vous _____ à l'heure pour l'examen.",
             options = listOf("venez", "veniez", "viendrez", "viennent"),
             correctIndex = 1,
-            explanation = "Après 'Il est primordial que', on emploie le subjonctif présent : que vous veniez."
+            explanation = "After 'Il est primordial que', French uses the present subjunctive: que vous veniez."
         ),
         QuizQuestion(
             id = "q2",
-            question = "Passé composé vs Imparfait :",
+            question = "Passé composé vs imparfait:",
             contextSentence = "Pendant que je _____ tranquillement dans le parc, un chien m'_____ .",
             options = listOf(
                 "me promenais / a surpris",
@@ -87,31 +89,31 @@ class ExamViewModel(
                 "me suis promené / a surpris"
             ),
             correctIndex = 0,
-            explanation = "L'action continue en arrière-plan prend l'imparfait (me promenais) et l'événement soudain prend le passé composé (a surpris)."
+            explanation = "The ongoing background action takes the imparfait (me promenais); the sudden event takes the passé composé (a surpris)."
         ),
         QuizQuestion(
             id = "q3",
-            question = "Accord du participe passé avec l'auxiliaire avoir :",
+            question = "Past participle agreement with avoir:",
             contextSentence = "Les jolies fleurs que j'ai _____ ce matin sont déjà fanées.",
             options = listOf("acheté", "achetée", "achetés", "achetées"),
             correctIndex = 3,
-            explanation = "Le COD 'les fleurs' (féminin pluriel) est placé avant le verbe avoir, donc on accorde : 'achetées'."
+            explanation = "The direct object 'les fleurs' (feminine plural) comes before avoir, so the participle agrees: 'achetées'."
         ),
         QuizQuestion(
             id = "q4",
-            question = "Pronoms compléments doubles :",
+            question = "Double object pronouns:",
             contextSentence = "Ce livre sur l'histoire de France ? Je _____ prêterai demain.",
             options = listOf("te le", "le te", "te lui", "lui te"),
             correctIndex = 0,
-            explanation = "L'ordre des pronoms compléments devant le verbe est COI 2e personne (te) puis COD (le) : 'Je te le prêterai'."
+            explanation = "The order of object pronouns is indirect (te) then direct (le): 'Je te le prêterai'."
         ),
         QuizQuestion(
             id = "q5",
-            question = "Expression de l'hypothèse :",
+            question = "Expressing hypotheses:",
             contextSentence = "Si j'avais su que tu venais, je _____ un gâteau.",
             options = listOf("préparerai", "préparais", "aurais préparé", "avais préparé"),
             correctIndex = 2,
-            explanation = "Si + plus-que-parfait (avais su) entraîne le conditionnel passé (aurais préparé) dans la proposition principale."
+            explanation = "Si + plus-que-parfait (avais su) requires the past conditional (aurais préparé) in the main clause."
         )
     )
 
@@ -204,11 +206,11 @@ class ExamViewModel(
             viewModelScope.launch {
                 val attempt = ExamResultEntity(
                     attemptId = "quiz_${UUID.randomUUID().toString().take(8)}",
-                    examType = "Quiz Grammaire",
-                    title = "Sprint de Conjugaison & Syntaxe",
+                    examType = "Grammar Quiz",
+                    title = "Conjugation & Syntax Sprint",
                     score = finalScore * 5,
                     maxScore = max * 5,
-                    feedback = "Score : $finalScore / $max bonnes réponses sur la grammaire avancée."
+                    feedback = "Score: $finalScore / $max correct answers on advanced grammar."
                 )
                 repository.recordExamResult(attempt)
             }
