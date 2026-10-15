@@ -53,10 +53,13 @@ jobs:
             echo "No GOOGLE_SERVICES_JSON secret — using committed file (if any)."
           fi
 
-      # build.gradle.kts signs debug builds with ${rootDir}/debug.keystore,
-      # but that file is gitignored — reproduce the standard Android debug
-      # keystore in CI so :app:validateSigningDebug can pass.
-      - name: Create debug keystore (gitignored, absent from repo)
+      # build.gradle.kts signs debug builds with ${rootDir}/debug.keystore.
+      # That keystore is now COMMITTED so every build is signed with the same
+      # key: Android refuses to install an update whose signing certificate
+      # changed, so a freshly generated key per run would silently fail to
+      # replace an already-installed build. The fallback below only runs if the
+      # committed keystore is ever deleted.
+      - name: Ensure debug keystore exists
         run: |
           if [ ! -f debug.keystore ]; then
             keytool -genkeypair -v \
