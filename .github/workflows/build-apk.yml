@@ -1,0 +1,55 @@
+name: Build APK
+
+# Builds a debug APK on every push / PR so the app can be downloaded and
+# installed without Android Studio (Actions → run → Artifacts).
+#
+# NOTE: the repo ships gradle/wrapper/gradle-wrapper.properties but no
+# gradlew script or wrapper jar, so this workflow installs Gradle 9.3.1
+# directly (the version the wrapper properties pin).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+
+      - name: Install Gradle 9.3.1
+        run: |
+          curl -sSLo "$RUNNER_TEMP/gradle.zip" https://services.gradle.org/distributions/gradle-9.3.1-bin.zip
+          unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-9.3.1/bin" >> "$GITHUB_PATH"
+
+      # Optional: without app/google-services.json the build still succeeds
+      # (missingGoogleServicesStrategy = WARN) but the app crashes on launch.
+      # Add a repo secret GOOGLE_SERVICES_JSON with the base64 of the file:
+      #   base64 -w0 app/google-services.json | gh secret set GOOGLE_SERVICES_JSON
+      - name: Inject google-services.json from secret
+        if: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
+
+      - name: Build debug APK
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: parle-french-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 30
