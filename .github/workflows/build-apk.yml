@@ -38,11 +38,20 @@ jobs:
 
       # Optional: without app/google-services.json the build still succeeds
       # (missingGoogleServicesStrategy = WARN) but the app crashes on launch.
-      # Add a repo secret GOOGLE_SERVICES_JSON with the base64 of the file:
-      #   base64 -w0 app/google-services.json | gh secret set GOOGLE_SERVICES_JSON
-      - name: Inject google-services.json from secret
-        if: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
-        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
+      # The file is committed, so this is only an override for when a
+      # GOOGLE_SERVICES_JSON secret (base64 of the file) is configured.
+      # NOTE: 'secrets' is not allowed in step-level `if:` expressions,
+      # hence the shell-side guard instead of an `if:` condition.
+      - name: Inject google-services.json from secret (if configured)
+        env:
+          GS_B64: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GS_B64" ]; then
+            echo "$GS_B64" | base64 -d > app/google-services.json
+            echo "Injected google-services.json from secret."
+          else
+            echo "No GOOGLE_SERVICES_JSON secret — using committed file (if any)."
+          fi
 
       - name: Build debug APK
         run: gradle assembleDebug --no-daemon --stacktrace
